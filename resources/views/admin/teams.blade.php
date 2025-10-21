@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'Управление командами')
+@section('title', __('Manage teams'))
 
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-users me-2"></i>Управление командами</h1>
+        <h1><i class="fas fa-users me-2"></i>{{ __('Manage teams') }}</h1>
         <a href="{{ route('teams.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Создать команду
+            <i class="fas fa-plus me-2"></i>{{ __('Create team') }}
         </a>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-header">
-            <h5 class="mb-0">Список команд</h5>
+            <h5 class="mb-0">{{ __('Teams list') }}</h5>
         </div>
         <div class="card-body">
             @if ($teams->isEmpty())
                 <div class="alert alert-info mb-0" role="alert">
-                    Команд пока нет.
+                    {{ __('No teams yet.') }}
                 </div>
             @else
                 <div class="table-responsive">
@@ -26,14 +26,14 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Название</th>
-                                <th>Лидер</th>
-                                <th>Статус</th>
-                                <th>Участников</th>
-                                <th>Институт</th>
-                                <th>Курс</th>
-                                <th>Создана</th>
-                                <th>Действия</th>
+                                <th>{{ __('Title') }}</th>
+                                <th>{{ __('Leader') }}</th>
+                                <th>{{ __('Status') }}</th>
+                                <th>{{ __('Members') }}</th>
+                                <th>{{ __('Institute') }}</th>
+                                <th>{{ __('Course') }}</th>
+                                <th>{{ __('Created at') }}</th>
+                                <th>{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,16 +54,16 @@
                                     <td>
                                         @switch($team->status)
                                             @case('recruiting')
-                                                <span class="badge bg-success">Набирает</span>
+                                                <span class="badge bg-success">{{ __('Recruiting') }}</span>
                                                 @break
                                             @case('active')
-                                                <span class="badge bg-primary">Активна</span>
+                                                <span class="badge bg-primary">{{ __('Active') }}</span>
                                                 @break
                                             @case('completed')
-                                                <span class="badge bg-info">Завершена</span>
+                                                <span class="badge bg-info">{{ __('Completed') }}</span>
                                                 @break
                                             @case('disbanded')
-                                                <span class="badge bg-secondary">Расформирована</span>
+                                                <span class="badge bg-secondary">{{ __('Disbanded') }}</span>
                                                 @break
                                             @default
                                                 <span class="badge bg-light text-dark">{{ $team->status }}</span>
@@ -89,7 +89,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="return confirm('Вы уверены, что хотите удалить эту команду?')">
+                                                        onclick="return confirm('{{ __('Are you sure you want to delete this team?') }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -101,7 +101,7 @@
                     </table>
                 </div>
                 <div class="mt-4">
-                    {{ $teams->links() }}
+                    {{ $teams->links('pagination::bootstrap-4') }}
                 </div>
             @endif
         </div>

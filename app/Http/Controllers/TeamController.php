@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -18,12 +19,32 @@ class TeamController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $teams = Team::with(['leader', 'members', 'projects'])
-            ->where('status', 'recruiting')
-            ->latest()
-            ->paginate(12);
+        $query = Team::with(['leader', 'members', 'projects', 'tags']);
+
+        // Фильтр по статусу
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Поиск по названию команды или лидеру
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('leader', function ($leaderQuery) use ($search) {
+                      $leaderQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Фильтр по максимальному размеру команды
+        if ($request->filled('max_members')) {
+            $query->where('max_members', $request->max_members);
+        }
+
+        $teams = $query->latest()->paginate(12);
 
         return view('teams.index', compact('teams'));
     }
@@ -33,7 +54,8 @@ class TeamController extends Controller
      */
     public function create()
     {
-        return view('teams.create');
+        $tags = Tag::all();
+        return view('teams.create', compact('tags'));
     }
 
     /**
@@ -45,10 +67,11 @@ class TeamController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'max_members' => 'required|integer|min:2|max:10',
-            'institute' => 'nullable|string|max:100',
-            'course' => 'nullable|integer|min:1|max:6',
             'recruitment_start' => 'nullable|date',
             'recruitment_end' => 'nullable|date|after:recruitment_start',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
+            'new_tags' => 'nullable|string',
         ]);
 
         $validated['leader_id'] = Auth::id();
@@ -62,6 +85,31 @@ class TeamController extends Controller
             'joined_at' => now()
         ]);
 
+        // Обрабатываем существующие теги
+        if ($request->has('tags')) {
+            $team->tags()->attach($request->tags);
+        }
+
+        // Обрабатываем новые теги
+        if ($request->filled('new_tags')) {
+            $newTagNames = array_filter(array_map('trim', explode(',', $request->new_tags)));
+            
+            foreach ($newTagNames as $tagName) {
+                if (!empty($tagName)) {
+                    // Проверяем, существует ли тег
+                    $tag = Tag::firstOrCreate(
+                        ['name' => $tagName],
+                        ['color' => '#6c757d', 'description' => 'Создан при создании команды']
+                    );
+                    
+                    // Добавляем тег к команде, если его еще нет
+                    if (!$team->tags()->where('tag_id', $tag->id)->exists()) {
+                        $team->tags()->attach($tag->id);
+                    }
+                }
+            }
+        }
+
         return redirect()->route('teams.show', $team)
             ->with('success', 'Команда успешно создана!');
     }
@@ -71,7 +119,7 @@ class TeamController extends Controller
      */
     public function show(Team $team)
     {
-        $team->load(['leader', 'members', 'projects', 'vacancies']);
+        $team->load(['leader', 'members', 'projects', 'vacancies', 'tags']);
         
         return view('teams.show', compact('team'));
     }
@@ -173,8 +221,66 @@ class TeamController extends Controller
             return back()->with('error', 'Лидер не может покинуть команду. Сначала передайте лидерство другому участнику.');
         }
 
+        // Удаляем пользователя из команды
         $team->members()->detach(Auth::id());
 
+        // Очищаем заявку пользователя (если есть)
+        $team->applications()
+            ->where('user_id', Auth::id())
+            ->delete();
+
         return back()->with('success', 'Вы покинули команду.');
+    }
+
+    /**
+     * Remove member from team (admin only)
+     */
+    public function removeMember(Request $request, Team $team, User $user)
+    {
+        // Проверяем, что пользователь является администратором
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только администратор может удалять участников из команды.');
+        }
+
+        // Проверяем, что пользователь в команде
+        if (!$team->members->contains($user->id)) {
+            return back()->with('error', 'Пользователь не состоит в этой команде.');
+        }
+
+        // Проверяем, что удаляемый пользователь не лидер
+        if ($team->leader_id === $user->id) {
+            return back()->with('error', 'Нельзя удалить лидера команды. Сначала передайте лидерство другому участнику.');
+        }
+
+        $reason = $request->get('reason', 'Удален администратором');
+        
+        $team->kickMember($user->id, $reason);
+
+        return back()->with('success', "Пользователь {$user->name} удален из команды.");
+    }
+
+    public function excludeMember(Request $request, Team $team, User $user)
+    {
+        // Проверяем, что пользователь является лидером команды
+        if ($team->leader_id !== Auth::id()) {
+            abort(403, 'Только лидер команды может исключать участников.');
+        }
+        
+        if (!$team->members->contains($user->id)) {
+            return back()->with('error', 'Пользователь не состоит в этой команде.');
+        }
+        
+        if ($team->leader_id === $user->id) {
+            return back()->with('error', 'Нельзя исключить лидера команды. Сначала передайте лидерство другому участнику.');
+        }
+        
+        $reason = $request->get('reason', 'Исключен лидером команды');
+        $result = $team->excludeMember($user->id, $reason);
+        
+        if ($result) {
+            return back()->with('success', "Пользователь {$user->name} исключен из команды.");
+        } else {
+            return back()->with('error', 'Не удалось исключить пользователя из команды.');
+        }
     }
 }

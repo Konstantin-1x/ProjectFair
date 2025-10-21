@@ -59,40 +59,6 @@
                                     @enderror
                                 </div>
                             </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="institute" class="form-label">Институт</label>
-                                    <select class="form-select @error('institute') is-invalid @enderror" id="institute" name="institute">
-                                        <option value="">Выберите институт</option>
-                                        <option value="ИИТУТ" {{ old('institute') === 'ИИТУТ' ? 'selected' : '' }}>ИИТУТ</option>
-                                        <option value="ИМО" {{ old('institute') === 'ИМО' ? 'selected' : '' }}>ИМО</option>
-                                        <option value="ИППИ" {{ old('institute') === 'ИППИ' ? 'selected' : '' }}>ИППИ</option>
-                                        <option value="ИЭУП" {{ old('institute') === 'ИЭУП' ? 'selected' : '' }}>ИЭУП</option>
-                                        <option value="ИФКС" {{ old('institute') === 'ИФКС' ? 'selected' : '' }}>ИФКС</option>
-                                    </select>
-                                    @error('institute')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="course" class="form-label">Курс</label>
-                                    <select class="form-select @error('course') is-invalid @enderror" id="course" name="course">
-                                        <option value="">Выберите курс</option>
-                                        @for($i = 1; $i <= 6; $i++)
-                                            <option value="{{ $i }}" {{ old('course') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                        @endfor
-                                    </select>
-                                    @error('course')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
                         </div>
                     </div>
                     
@@ -132,6 +98,49 @@
                         </div>
                     </div>
                     
+                    <!-- Теги команды -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-tags me-2"></i>Теги команды
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Выберите теги, которые описывают вашу команду</label>
+                            <div class="row">
+                                @foreach($tags as $tag)
+                                <div class="col-md-4 col-lg-3 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="tags[]" value="{{ $tag->id }}" 
+                                               id="tag_{{ $tag->id }}"
+                                               {{ in_array($tag->id, old('tags', [])) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="tag_{{ $tag->id }}">
+                                            {{ $tag->name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                            @error('tags')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_tags" class="form-label">Добавить свои теги</label>
+                            <input type="text" class="form-control @error('new_tags') is-invalid @enderror" 
+                                   id="new_tags" name="new_tags" value="{{ old('new_tags') }}" 
+                                   placeholder="Например: Дизайн, Маркетинг, Исследования (разделяйте запятыми)">
+                            @error('new_tags')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Если не нашли подходящий тег, добавьте свой. Разделяйте несколько тегов запятыми.
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Информация о лидере -->
                     <div class="mb-4">
                         <h5 class="text-primary mb-3">
@@ -151,9 +160,6 @@
                                     <div>
                                         <h6 class="mb-1">{{ Auth::user()->name }}</h6>
                                         <small class="text-muted">{{ Auth::user()->email }}</small>
-                                        @if(Auth::user()->institute && Auth::user()->course)
-                                            <br><small class="text-muted">{{ Auth::user()->institute }}, {{ Auth::user()->course }} курс</small>
-                                        @endif
                                     </div>
                                 </div>
                             </div>

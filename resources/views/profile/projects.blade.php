@@ -27,7 +27,7 @@
                         <i class="fas fa-users me-2"></i>Команды
                     </a>
                     @if(Auth::id() === $user->id)
-                        <a href="{{ route('projects.new.create') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('projects.create') }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-2"></i>Создать проект
                         </a>
                     @endif
@@ -151,7 +151,7 @@
                     {{ Auth::id() === $user->id ? 'Создайте свой первый проект и поделитесь им с сообществом!' : 'Этот пользователь еще не создал ни одного проекта.' }}
                 </p>
                 @if(Auth::id() === $user->id)
-                    <a href="{{ route('projects.new.create') }}" class="btn btn-primary">
+                    <a href="{{ route('projects.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Создать первый проект
                     </a>
                 @endif

@@ -1,19 +1,19 @@
 @extends('layouts.app')
 
-@section('title', 'Управление пользователями')
+@section('title', __('Manage users'))
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-users me-2"></i>Управление пользователями</h1>
+    <h1><i class="fas fa-users me-2"></i>{{ __('Manage users') }}</h1>
     <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Назад к панели
+        <i class="fas fa-arrow-left me-2"></i>{{ __('Back to panel') }}
     </a>
 </div>
 
 <!-- Users Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="mb-0">Список пользователей ({{ $users->total() }})</h5>
+        <h5 class="mb-0">{{ __('Users list') }} ({{ $users->total() }})</h5>
     </div>
     <div class="card-body">
         @if($users->count() > 0)
@@ -21,15 +21,15 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Пользователь</th>
-                            <th>Email</th>
-                            <th>Институт</th>
-                            <th>Курс</th>
-                            <th>Роль</th>
-                            <th>Проекты</th>
-                            <th>Команды</th>
-                            <th>Дата регистрации</th>
-                            <th>Действия</th>
+                            <th>{{ __('User') }}</th>
+                            <th>{{ __('Email') }}</th>
+                            <th>{{ __('Institute') }}</th>
+                            <th>{{ __('Course') }}</th>
+                            <th>{{ __('Role') }}</th>
+                            <th>{{ __('Projects') }}</th>
+                            <th>{{ __('Teams') }}</th>
+                            <th>{{ __('Registration date') }}</th>
+                            <th>{{ __('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -54,7 +54,7 @@
                             <td>{{ $user->course ?? '-' }}</td>
                             <td>
                                 <span class="badge bg-{{ $user->role === 'admin' ? 'danger' : 'primary' }}">
-                                    {{ $user->role === 'admin' ? 'Администратор' : 'Пользователь' }}
+                                    {{ $user->role === 'admin' ? __('Administrator') : __('User') }}
                                 </span>
                             </td>
                             <td>
@@ -77,7 +77,7 @@
                                         <form action="{{ route('admin.users.toggle-admin', $user) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-{{ $user->role === 'admin' ? 'danger' : 'success' }}"
-                                                    onclick="return confirm('{{ $user->role === 'admin' ? 'Лишить прав администратора?' : 'Назначить администратором?' }}')">
+                                                    onclick="return confirm('{{ $user->role === 'admin' ? __('Revoke admin rights?') : __('Make admin?') }}')">
                                                 <i class="fas fa-{{ $user->role === 'admin' ? 'user-minus' : 'user-plus' }}"></i>
                                             </button>
                                         </form>
@@ -92,13 +92,13 @@
             
             <!-- Pagination -->
             <div class="d-flex justify-content-center">
-                {{ $users->links() }}
+                {{ $users->links('pagination::bootstrap-4') }}
             </div>
         @else
             <div class="text-center py-5">
                 <i class="fas fa-users fa-4x text-muted mb-3"></i>
-                <h3>Пользователи не найдены</h3>
-                <p class="text-muted">В системе пока нет пользователей.</p>
+                <h3>{{ __('No users found') }}</h3>
+                <p class="text-muted">{{ __('There are no users yet.') }}</p>
             </div>
         @endif
     </div>
@@ -110,49 +110,49 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="userModalLabel{{ $user->id }}">Информация о пользователе: {{ $user->name }}</h5>
+                <h5 class="modal-title" id="userModalLabel{{ $user->id }}">{{ __('User info') }}: {{ $user->name }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>Основная информация</h6>
-                        <p><strong>Имя:</strong> {{ $user->name }}</p>
-                        <p><strong>Email:</strong> {{ $user->email }}</p>
-                        <p><strong>Роль:</strong> 
+                        <h6>{{ __('Main info') }}</h6>
+                        <p><strong>{{ __('Name') }}:</strong> {{ $user->name }}</p>
+                        <p><strong>{{ __('Email') }}:</strong> {{ $user->email }}</p>
+                        <p><strong>{{ __('Role') }}:</strong> 
                             <span class="badge bg-{{ $user->role === 'admin' ? 'danger' : 'primary' }}">
-                                {{ $user->role === 'admin' ? 'Администратор' : 'Пользователь' }}
+                                {{ $user->role === 'admin' ? __('Administrator') : __('User') }}
                             </span>
                         </p>
-                        <p><strong>Дата регистрации:</strong> {{ $user->created_at->format('d.m.Y H:i') }}</p>
+                        <p><strong>{{ __('Registration date') }}:</strong> {{ $user->created_at->format('d.m.Y H:i') }}</p>
                     </div>
                     <div class="col-md-6">
-                        <h6>Учебная информация</h6>
-                        <p><strong>Институт:</strong> {{ $user->institute ?? 'Не указан' }}</p>
-                        <p><strong>Курс:</strong> {{ $user->course ?? 'Не указан' }}</p>
-                        <p><strong>Группа:</strong> {{ $user->group ?? 'Не указана' }}</p>
+                        <h6>{{ __('Academic info') }}</h6>
+                        <p><strong>{{ __('Institute') }}:</strong> {{ $user->institute ?? __('Not specified') }}</p>
+                        <p><strong>{{ __('Course') }}:</strong> {{ $user->course ?? __('Not specified') }}</p>
+                        <p><strong>{{ __('Group') }}:</strong> {{ $user->group ?? __('Not specified') }}</p>
                     </div>
                 </div>
                 @if($user->bio)
                 <div class="mt-3">
-                    <h6>О себе</h6>
+                    <h6>{{ __('About') }}</h6>
                     <p>{{ $user->bio }}</p>
                 </div>
                 @endif
                 <div class="mt-3">
-                    <h6>Статистика</h6>
+                    <h6>{{ __('Statistics') }}</h6>
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Проектов:</strong> {{ $user->projects_count }}</p>
+                            <p><strong>{{ __('Projects') }}:</strong> {{ $user->projects_count }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Команд:</strong> {{ $user->teams_count }}</p>
+                            <p><strong>{{ __('Teams') }}:</strong> {{ $user->teams_count }}</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Close') }}</button>
             </div>
         </div>
     </div>

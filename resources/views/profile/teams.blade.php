@@ -99,7 +99,7 @@
                                     <small class="text-muted">
                                         <i class="fas fa-calendar me-1"></i>{{ $team->created_at->format('d.m.Y') }}
                                     </small>
-                                    <a href="#" class="btn btn-outline-primary btn-sm">
+                                    <a href="{{ route('teams.show', $team) }}" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-eye me-1"></i>Подробнее
                                     </a>
                                 </div>
@@ -168,10 +168,10 @@
                                         <i class="fas fa-calendar me-1"></i>{{ $team->created_at->format('d.m.Y') }}
                                     </small>
                                     <div>
-                                        <a href="#" class="btn btn-warning btn-sm me-1">
+                                        <a href="{{ route('teams.edit', $team) }}" class="btn btn-warning btn-sm me-1">
                                             <i class="fas fa-edit me-1"></i>Управлять
                                         </a>
-                                        <a href="#" class="btn btn-outline-primary btn-sm">
+                                        <a href="{{ route('teams.show', $team) }}" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye me-1"></i>Подробнее
                                         </a>
                                     </div>
@@ -199,7 +199,7 @@
                         <a href="{{ route('teams.create') }}" class="btn btn-success">
                             <i class="fas fa-plus me-2"></i>Создать команду
                         </a>
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="{{ route('teams.index') }}" class="btn btn-outline-primary">
                             <i class="fas fa-search me-2"></i>Найти команды
                         </a>
                     </div>

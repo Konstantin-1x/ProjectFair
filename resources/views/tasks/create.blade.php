@@ -52,6 +52,40 @@
                         </div>
                     </div>
                     
+                    <!-- Проект -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-project-diagram me-2"></i>Проект
+                        </h5>
+                        
+                        @if($projects->count() > 0)
+                            <div class="mb-3">
+                                <label for="project_id" class="form-label">Выберите проект <span class="text-danger">*</span></label>
+                                <select class="form-select @error('project_id') is-invalid @enderror" id="project_id" name="project_id" required>
+                                    <option value="">Выберите проект</option>
+                                    @foreach($projects as $project)
+                                        <option value="{{ $project->id }}" {{ (old('project_id') == $project->id || ($selectedProject && $selectedProject->id == $project->id)) ? 'selected' : '' }}>
+                                            {{ $project->title }} - {{ $project->status }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('project_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Задача будет привязана к выбранному проекту (только ваши проекты)</div>
+                            </div>
+                        @else
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>У вас нет активных проектов!</strong>
+                                <p class="mb-2">Для создания задачи необходимо сначала создать проект.</p>
+                                <a href="{{ route('projects.create') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Создать проект
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                    
                     <!-- Классификация -->
                     <div class="mb-4">
                         <h5 class="text-primary mb-3">
@@ -99,40 +133,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="institute" class="form-label">Институт</label>
-                                    <select class="form-select @error('institute') is-invalid @enderror" id="institute" name="institute">
-                                        <option value="">Выберите институт</option>
-                                        <option value="ИИТУТ" {{ old('institute') === 'ИИТУТ' ? 'selected' : '' }}>ИИТУТ</option>
-                                        <option value="ИМО" {{ old('institute') === 'ИМО' ? 'selected' : '' }}>ИМО</option>
-                                        <option value="ИППИ" {{ old('institute') === 'ИППИ' ? 'selected' : '' }}>ИППИ</option>
-                                        <option value="ИЭУП" {{ old('institute') === 'ИЭУП' ? 'selected' : '' }}>ИЭУП</option>
-                                        <option value="ИФКС" {{ old('institute') === 'ИФКС' ? 'selected' : '' }}>ИФКС</option>
-                                    </select>
-                                    @error('institute')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="course" class="form-label">Курс</label>
-                                    <select class="form-select @error('course') is-invalid @enderror" id="course" name="course">
-                                        <option value="">Выберите курс</option>
-                                        @for($i = 1; $i <= 6; $i++)
-                                            <option value="{{ $i }}" {{ old('course') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                        @endfor
-                                    </select>
-                                    @error('course')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- Параметры выполнения -->
@@ -142,23 +142,6 @@
                         </h5>
                         
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="max_team_size" class="form-label">Максимальный размер команды <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('max_team_size') is-invalid @enderror" id="max_team_size" name="max_team_size" required>
-                                        <option value="">Выберите размер команды</option>
-                                        @for($i = 1; $i <= 10; $i++)
-                                            <option value="{{ $i }}" {{ old('max_team_size') == $i ? 'selected' : '' }}>
-                                                {{ $i }} {{ $i == 1 ? 'участник' : ($i < 5 ? 'участника' : 'участников') }}
-                                            </option>
-                                        @endfor
-                                    </select>
-                                    @error('max_team_size')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="deadline" class="form-label">Срок выполнения</label>
@@ -173,26 +156,26 @@
                         </div>
                     </div>
                     
-                    <!-- Назначение команде -->
+                    <!-- Назначение пользователю -->
                     <div class="mb-4">
                         <h5 class="text-primary mb-3">
-                            <i class="fas fa-users me-2"></i>Назначение команде
+                            <i class="fas fa-user me-2"></i>Назначение пользователю
                         </h5>
                         
                         <div class="mb-3">
-                            <label for="assigned_team_id" class="form-label">Назначить команде</label>
-                            <select class="form-select @error('assigned_team_id') is-invalid @enderror" id="assigned_team_id" name="assigned_team_id">
+                            <label for="assigned_user_id" class="form-label">Назначить пользователю</label>
+                            <select class="form-select @error('assigned_user_id') is-invalid @enderror" id="assigned_user_id" name="assigned_user_id">
                                 <option value="">Оставить открытой для всех</option>
-                                @foreach($teams as $team)
-                                    <option value="{{ $team->id }}" {{ old('assigned_team_id') == $team->id ? 'selected' : '' }}>
-                                        {{ $team->name }} ({{ $team->leader->name }}) - {{ $team->members->count() }}/{{ $team->max_members }} участников
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}" {{ old('assigned_user_id') == $user->id ? 'selected' : '' }}>
+                                        {{ $user->name }} ({{ $user->email }})
                                     </option>
                                 @endforeach
                             </select>
-                            @error('assigned_team_id')
+                            @error('assigned_user_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <div class="form-text">Если выберете команду, задача будет назначена только ей. Иначе любая команда сможет взять задачу.</div>
+                            <div class="form-text">Если выберете пользователя, задача будет назначена только ему. Иначе любой пользователь сможет взять задачу.</div>
                         </div>
                     </div>
                     
@@ -229,7 +212,7 @@
                         <a href="{{ route('tasks.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Отмена
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" {{ $projects->count() == 0 ? 'disabled' : '' }}>
                             <i class="fas fa-save me-2"></i>Создать задачу
                         </button>
                     </div>

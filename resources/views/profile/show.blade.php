@@ -137,7 +137,7 @@
                         <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
                         <h5 class="text-muted">Пока нет проектов</h5>
                         @if(Auth::id() === $user->id)
-                            <a href="{{ route('projects.new.create') }}" class="btn btn-primary">
+                            <a href="{{ route('projects.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Создать первый проект
                             </a>
                         @endif
@@ -172,6 +172,15 @@
                     <div class="text-center py-5">
                         <i class="fas fa-users fa-4x text-muted mb-3"></i>
                         <h5 class="text-muted">Пока нет команд</h5>
+                        <p class="text-muted mb-4">Присоединитесь к существующим командам или создайте свою</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{{ route('teams.index') }}" class="btn btn-primary">
+                                <i class="fas fa-users me-2"></i>Все команды
+                            </a>
+                            <a href="{{ route('teams.create') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>Создать команду
+                            </a>
+                        </div>
                     </div>
                 @endif
             </div>

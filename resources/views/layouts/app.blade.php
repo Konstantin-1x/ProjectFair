@@ -40,7 +40,20 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('projects.index') }}">Проекты</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('teams.index') }}">Команды</a>
+                        </li>
                         @auth
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('teams.my-applications') }}">
+                                    <i class="fas fa-file-alt me-1"></i>Мои заявки
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('my-team-applications') }}">
+                                    <i class="fas fa-users me-1"></i>Заявки команд
+                                </a>
+                            </li>
                             @if(auth()->user()->isAdmin())
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('admin.dashboard') }}">
@@ -53,6 +66,20 @@
 
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
+                        <!-- Language Switcher -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i>{{ strtoupper(app()->getLocale()) }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="langDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('locale.switch', ['lang' => 'ru']) }}">Русский</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('locale.switch', ['lang' => 'en']) }}">English</a>
+                                </li>
+                            </ul>
+                        </li>
                         <!-- Authentication Links -->
                         @guest
                             @if (Route::has('login'))
@@ -105,11 +132,17 @@
                                     <a class="dropdown-item" href="{{ route('profile.teams') }}">
                                         <i class="fas fa-users me-2"></i>Мои команды
                                     </a>
+                                    <a class="dropdown-item" href="{{ route('teams.my-applications') }}">
+                                        <i class="fas fa-file-alt me-2"></i>Мои заявки
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('my-team-applications') }}">
+                                        <i class="fas fa-users me-2"></i>Заявки команд
+                                    </a>
                                     
                                     <div class="dropdown-divider"></div>
                                     
                                     <!-- Create Actions -->
-                                    <a class="dropdown-item" href="{{ route('projects.new.create') }}">
+                                    <a class="dropdown-item" href="{{ route('projects.create') }}">
                                         <i class="fas fa-plus me-2"></i>Создать проект
                                     </a>
                                     <a class="dropdown-item" href="{{ route('teams.create') }}">
@@ -180,6 +213,92 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Fix for modal backdrop flickering -->
+    <style>
+        /* Fix modal backdrop flickering */
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 1040 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            opacity: 0.5 !important;
+            transition: none !important;
+        }
+        
+        .modal-backdrop.fade {
+            opacity: 0.5 !important;
+            transition: none !important;
+        }
+        
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
+            transition: none !important;
+        }
+        
+        /* Prevent hover effects on backdrop */
+        .modal-backdrop:hover {
+            opacity: 0.5 !important;
+        }
+        
+        /* Ensure modal is above backdrop */
+        .modal {
+            z-index: 1055 !important;
+        }
+        
+        /* Custom pagination styles */
+        .pagination .page-link {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .pagination .page-link:hover {
+            color: #495057;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
+
+        .pagination .page-link i {
+            font-size: 0.75rem;
+        }
+    </style>
+    
+    <!-- Simple modal flickering fix -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simple fix for modal backdrop flickering
+            document.addEventListener('show.bs.modal', function (event) {
+                // Remove any existing backdrops to prevent duplicates
+                const existingBackdrops = document.querySelectorAll('.modal-backdrop');
+                existingBackdrops.forEach(backdrop => backdrop.remove());
+            });
+            
+            document.addEventListener('hidden.bs.modal', function (event) {
+                // Clean up any remaining backdrops
+                const existingBackdrops = document.querySelectorAll('.modal-backdrop');
+                existingBackdrops.forEach(backdrop => backdrop.remove());
+                document.body.classList.remove('modal-open');
+            });
+        });
+    </script>
     
     @stack('scripts')
 </body>

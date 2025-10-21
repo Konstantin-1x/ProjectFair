@@ -14,20 +14,23 @@ class Task extends Model
         'difficulty',
         'status',
         'type',
-        'institute',
-        'course',
-        'max_team_size',
         'deadline',
         'created_by',
-        'assigned_team_id',
+        'project_id',
+        'assigned_user_id',
         'assigned_at',
         'completed_at',
+        'completion_text',
+        'completion_file',
+        'is_basic_task',
+        'order',
     ];
 
     protected $casts = [
         'deadline' => 'datetime',
         'assigned_at' => 'datetime',
         'completed_at' => 'datetime',
+        'is_basic_task' => 'boolean',
     ];
 
     public function creator(): BelongsTo
@@ -35,8 +38,43 @@ class Task extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function assignedTeam(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(Team::class, 'assigned_team_id');
+        return $this->belongsTo(Project::class);
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    public function files()
+    {
+        return $this->hasMany(TaskFile::class);
+    }
+
+    public function completeTask($completionText = null, $completionFile = null)
+    {
+        $this->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completion_text' => $completionText,
+            'completion_file' => $completionFile,
+        ]);
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function hasCompletionFile()
+    {
+        return !is_null($this->completion_file);
+    }
+
+    public function hasCompletionText()
+    {
+        return !is_null($this->completion_text);
     }
 }

@@ -85,12 +85,33 @@ class AdminController extends Controller
             ->orderBy('month')
             ->get();
 
+        // Аналитика по задачам проектов
+        $project_tasks_analytics = Project::with(['tasks'])
+            ->where('status', '!=', 'completed')
+            ->get()
+            ->map(function ($project) {
+                $totalTasks = $project->tasks->count();
+                $completedTasks = $project->tasks->where('status', 'completed')->count();
+                $progressPercentage = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 2) : 0;
+                
+                return [
+                    'project' => $project,
+                    'total_tasks' => $totalTasks,
+                    'completed_tasks' => $completedTasks,
+                    'progress_percentage' => $progressPercentage,
+                    'pending_tasks' => $project->tasks->where('status', 'open')->count(),
+                    'in_progress_tasks' => $project->tasks->where('status', 'in_progress')->count(),
+                ];
+            })
+            ->sortByDesc('progress_percentage');
+
         return view('admin.analytics', compact(
             'institute_stats',
             'course_stats', 
             'technology_stats',
             'tag_stats',
-            'monthly_stats'
+            'monthly_stats',
+            'project_tasks_analytics'
         ));
     }
 
@@ -124,7 +145,7 @@ class AdminController extends Controller
 
     public function tasks()
     {
-        $tasks = Task::with(['creator', 'assignedTeam'])
+        $tasks = Task::with(['creator', 'assignedUser', 'project'])
             ->latest()
             ->paginate(20);
 

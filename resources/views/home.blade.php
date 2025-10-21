@@ -109,7 +109,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3 mb-3">
-                        <a href="{{ route('projects.new.create') }}" class="btn btn-primary w-100">
+                        <a href="{{ route('projects.create') }}" class="btn btn-primary w-100">
                             <i class="fas fa-plus me-2"></i>Создать проект
                         </a>
                     </div>
@@ -173,7 +173,7 @@
                     <div class="text-center py-4">
                         <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
                         <p class="text-muted">У вас пока нет проектов</p>
-                        <a href="{{ route('projects.new.create') }}" class="btn btn-primary">Создать первый проект</a>
+                        <a href="{{ route('projects.create') }}" class="btn btn-primary">Создать первый проект</a>
                     </div>
                 @endif
             </div>

@@ -27,6 +27,17 @@
                                 <p class="text-muted mb-3">{{ $team->description }}</p>
                             @endif
                             
+                            @if($team->tags->count() > 0)
+                                <div class="mb-3">
+                                    <strong>Теги команды:</strong>
+                                    <div class="mt-2">
+                                        @foreach($team->tags as $tag)
+                                            <span class="badge bg-secondary me-1 mb-1">{{ $tag->name }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -34,13 +45,6 @@
                                         <strong>Лидер:</strong>
                                         <span class="ms-2">{{ $team->leader->name }}</span>
                                     </div>
-                                    @if($team->institute)
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-university me-2 text-primary"></i>
-                                            <strong>Институт:</strong>
-                                            <span class="ms-2">{{ $team->institute }}</span>
-                                        </div>
-                                    @endif
                                 </div>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center mb-2">
@@ -48,13 +52,6 @@
                                         <strong>Участников:</strong>
                                         <span class="ms-2">{{ $team->members->count() }}/{{ $team->max_members }}</span>
                                     </div>
-                                    @if($team->course)
-                                        <div class="d-flex align-items-center mb-2">
-                                            <i class="fas fa-graduation-cap me-2 text-primary"></i>
-                                            <strong>Курс:</strong>
-                                            <span class="ms-2">{{ $team->course }}</span>
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -66,11 +63,14 @@
                                         <a href="{{ route('teams.edit', $team) }}" class="btn btn-warning">
                                             <i class="fas fa-edit me-2"></i>Управлять командой
                                         </a>
+                                        <a href="{{ route('teams.applications', $team) }}" class="btn btn-info">
+                                            <i class="fas fa-file-alt me-2"></i>Заявки ({{ $team->pendingApplications()->count() }})
+                                        </a>
                                         <span class="badge bg-warning text-dark">
                                             <i class="fas fa-crown me-1"></i>Вы - лидер команды
                                         </span>
                                     </div>
-                                @elseif($team->members->contains(Auth::id()))
+                                @elseif($team->members()->where('user_id', Auth::id())->exists())
                                     <div class="d-flex flex-column gap-2">
                                         <form method="POST" action="{{ route('teams.leave', $team) }}" class="d-inline">
                                             @csrf
@@ -82,13 +82,35 @@
                                             <i class="fas fa-user me-1"></i>Вы участник команды
                                         </span>
                                     </div>
-                                @elseif($team->status === 'recruiting' && $team->members->count() < $team->max_members)
-                                    <form method="POST" action="{{ route('teams.join', $team) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-user-plus me-2"></i>Присоединиться
-                                        </button>
-                                    </form>
+                                @elseif($team->canUserApply(Auth::id()))
+                                    <a href="{{ route('teams.apply', $team) }}" class="btn btn-success">
+                                        <i class="fas fa-paper-plane me-2"></i>Подать заявку
+                                    </a>
+                                @elseif($team->hasUserApplied(Auth::id()))
+                                    @php
+                                        $userApplication = $team->getUserApplication(Auth::id());
+                                    @endphp
+                                    <div class="d-flex flex-column gap-2">
+                                        <span class="badge bg-{{ $userApplication->status === 'pending' ? 'warning' : ($userApplication->status === 'approved' ? 'success' : 'danger') }}">
+                                            @if($userApplication->status === 'pending')
+                                                Заявка на рассмотрении
+                                            @elseif($userApplication->status === 'approved')
+                                                Заявка одобрена
+                                            @else
+                                                Заявка отклонена
+                                            @endif
+                                        </span>
+                                        @if($userApplication->status === 'pending')
+                                            <form method="POST" action="{{ route('teams.applications.withdraw', [$team, $userApplication]) }}" 
+                                                  class="d-inline" 
+                                                  onsubmit="return confirm('Отозвать заявку?')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-times me-1"></i>Отозвать заявку
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 @else
                                     <span class="badge bg-secondary">Команда полная или не принимает участников</span>
                                 @endif
@@ -115,35 +137,59 @@
                 </div>
                 <div class="card-body">
                     @if($team->members->count() > 0)
-                        <div class="row">
+                        <div class="list-group list-group-flush">
                             @foreach($team->members as $member)
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-center p-3 border rounded">
+                            <div class="list-group-item d-flex align-items-center py-3">
+                                <div class="me-3">
                                     @if($member->avatar)
-                                        <img src="{{ Storage::url($member->avatar) }}" alt="{{ $member->name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <img src="{{ Storage::url($member->avatar) }}" alt="{{ $member->name }}" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
                                     @else
-                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
-                                            <i class="fas fa-user"></i>
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            <i class="fas fa-user fa-lg"></i>
                                         </div>
                                     @endif
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">
+                                </div>
+                                
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <h6 class="mb-0 me-2">
                                             {{ $member->name }}
                                             @if($member->id === $team->leader_id)
                                                 <i class="fas fa-crown text-warning ms-1"></i>
                                             @endif
                                         </h6>
-                                        <small class="text-muted">{{ $member->email }}</small>
-                                        @if($member->institute && $member->course)
-                                            <br><small class="text-muted">{{ $member->institute }}, {{ $member->course }} курс</small>
-                                        @endif
-                                    </div>
-                                    <div class="text-end">
                                         <span class="badge bg-{{ $member->id === $team->leader_id ? 'warning' : 'primary' }}">
                                             {{ $member->id === $team->leader_id ? 'Лидер' : 'Участник' }}
                                         </span>
-                                        <br><small class="text-muted">{{ $member->pivot->joined_at ? \Carbon\Carbon::parse($member->pivot->joined_at)->format('d.m.Y') : 'Неизвестно' }}</small>
                                     </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-envelope me-1"></i>{{ $member->email }}
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-calendar me-1"></i>Присоединился: {{ $member->pivot->joined_at ? \Carbon\Carbon::parse($member->pivot->joined_at)->format('d.m.Y H:i') : 'Неизвестно' }}
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    @auth
+                                        @if(Auth::user()->isAdmin() && $member->id !== $team->leader_id)
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#removeMemberModal"
+                                                    data-member-id="{{ $member->id }}"
+                                                    data-member-name="{{ $member->name }}">
+                                                <i class="fas fa-user-times me-1"></i>Удалить
+                                            </button>
+                                        @elseif(Auth::id() === $team->leader_id && $member->id !== $team->leader_id)
+                                            <button type="button" class="btn btn-outline-warning btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#excludeMemberModal"
+                                                    data-member-id="{{ $member->id }}"
+                                                    data-member-name="{{ $member->name }}">
+                                                <i class="fas fa-user-minus me-1"></i>Исключить
+                                            </button>
+                                        @endif
+                                    @endauth
                                 </div>
                             </div>
                             @endforeach
@@ -260,16 +306,16 @@
                             <a href="{{ route('teams.edit', $team) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit me-2"></i>Редактировать команду
                             </a>
+                            <a href="{{ route('teams.applications', $team) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-users me-2"></i>Заявки команды
+                            </a>
                             <a href="{{ route('projects.create') }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-plus me-2"></i>Создать проект
                             </a>
                         @elseif(!$team->members->contains(Auth::id()) && $team->status === 'recruiting' && $team->members->count() < $team->max_members)
-                            <form method="POST" action="{{ route('teams.join', $team) }}">
-                                @csrf
-                                <button type="submit" class="btn btn-success btn-sm w-100">
-                                    <i class="fas fa-user-plus me-2"></i>Присоединиться к команде
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-success btn-sm w-100" data-bs-toggle="modal" data-bs-target="#applyModal">
+                                <i class="fas fa-user-plus me-2"></i>Подать заявку
+                            </button>
                         @endif
                         
                         <a href="{{ route('teams.index') }}" class="btn btn-outline-secondary btn-sm">
@@ -282,4 +328,131 @@
         </div>
     </div>
 </div>
+
+<!-- Application Modal -->
+@if(!$team->members->contains(Auth::id()) && $team->status === 'recruiting' && $team->members->count() < $team->max_members)
+    <div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="applyModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Подача заявки в команду
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ route('teams.apply.store', $team) }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <h6>Команда: <strong>{{ $team->name }}</strong></h6>
+                            <p class="text-muted">Лидер: {{ $team->leader->name }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Сообщение лидеру команды (необязательно):</label>
+                            <textarea class="form-control" id="message" name="message" rows="4" 
+                                      placeholder="Расскажите о себе, своих навыках и почему хотите присоединиться к этой команде..."></textarea>
+                            <div class="form-text">Это сообщение будет отправлено лидеру команды для рассмотрения вашей заявки.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-1"></i>Подать заявку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
+<!-- Unified Modals -->
+<!-- Remove Member Modal -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-labelledby="removeMemberModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeMemberModalLabel">Удаление участника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="removeMemberText">Вы уверены, что хотите удалить участника из команды?</p>
+                <form id="removeMemberForm" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Причина удаления (необязательно):</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Укажите причину удаления..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="removeMemberForm" class="btn btn-danger">
+                    <i class="fas fa-user-times me-1"></i>Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exclude Member Modal -->
+<div class="modal fade" id="excludeMemberModal" tabindex="-1" aria-labelledby="excludeMemberModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="excludeMemberModalLabel">Исключение участника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="excludeMemberText">Вы уверены, что хотите исключить участника из команды?</p>
+                <form id="excludeMemberForm" method="POST">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="excludeReason" class="form-label">Причина исключения (необязательно):</label>
+                        <textarea class="form-control" id="excludeReason" name="reason" rows="3" placeholder="Укажите причину исключения..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="excludeMemberForm" class="btn btn-warning">
+                    <i class="fas fa-user-minus me-1"></i>Исключить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle remove member modal
+    document.querySelectorAll('[data-bs-target="#removeMemberModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            const memberName = this.getAttribute('data-member-name');
+            
+            document.getElementById('removeMemberText').innerHTML = 
+                `Вы уверены, что хотите удалить <strong>${memberName}</strong> из команды?`;
+            document.getElementById('removeMemberForm').action = 
+                `{{ url('teams/' . $team->id . '/members') }}/${memberId}`;
+        });
+    });
+    
+    // Handle exclude member modal
+    document.querySelectorAll('[data-bs-target="#excludeMemberModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            const memberName = this.getAttribute('data-member-name');
+            
+            document.getElementById('excludeMemberText').innerHTML = 
+                `Вы уверены, что хотите исключить <strong>${memberName}</strong> из команды?`;
+            document.getElementById('excludeMemberForm').action = 
+                `{{ url('teams/' . $team->id . '/members') }}/${memberId}/exclude`;
+        });
+    });
+});
+</script>
+
 @endsection

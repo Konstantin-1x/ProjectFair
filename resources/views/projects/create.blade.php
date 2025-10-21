@@ -78,18 +78,50 @@
                                 </div>
                             </div>
                             
+                        </div>
+                        
+                        <!-- Выбор команды -->
+                        <div class="mb-3">
+                            <label for="team_id" class="form-label">Команда для проекта <span class="text-danger">*</span></label>
+                            <select name="team_id" id="team_id" class="form-select @error('team_id') is-invalid @enderror" required>
+                                <option value="">-- Выберите команду --</option>
+                                @foreach($userTeams as $team)
+                                    <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
+                                        {{ $team->name }} ({{ $team->members->count() }} участников, статус: {{ $team->status === 'active' ? 'Активная' : 'Набор' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('team_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Выберите команду, для которой создается проект</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Сроки выполнения -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-calendar-alt me-2"></i>Сроки выполнения
+                        </h5>
+                        
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="institute" class="form-label">Институт</label>
-                                    <select class="form-select @error('institute') is-invalid @enderror" id="institute" name="institute">
-                                        <option value="">Выберите институт</option>
-                                        <option value="ИИТУТ" {{ old('institute') === 'ИИТУТ' ? 'selected' : '' }}>ИИТУТ</option>
-                                        <option value="ИМО" {{ old('institute') === 'ИМО' ? 'selected' : '' }}>ИМО</option>
-                                        <option value="ИППИ" {{ old('institute') === 'ИППИ' ? 'selected' : '' }}>ИППИ</option>
-                                        <option value="ИЭУП" {{ old('institute') === 'ИЭУП' ? 'selected' : '' }}>ИЭУП</option>
-                                        <option value="ИФКС" {{ old('institute') === 'ИФКС' ? 'selected' : '' }}>ИФКС</option>
-                                    </select>
-                                    @error('institute')
+                                    <label for="project_deadline" class="form-label">Срок завершения проекта</label>
+                                    <input type="date" class="form-control @error('project_deadline') is-invalid @enderror" 
+                                           id="project_deadline" name="project_deadline" value="{{ old('project_deadline') }}">
+                                    @error('project_deadline')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="team_join_deadline" class="form-label">Срок вступления команд</label>
+                                    <input type="date" class="form-control @error('team_join_deadline') is-invalid @enderror" 
+                                           id="team_join_deadline" name="team_join_deadline" value="{{ old('team_join_deadline') }}">
+                                    @error('team_join_deadline')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -99,14 +131,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="course" class="form-label">Курс</label>
-                                    <select class="form-select @error('course') is-invalid @enderror" id="course" name="course">
-                                        <option value="">Выберите курс</option>
-                                        @for($i = 1; $i <= 6; $i++)
-                                            <option value="{{ $i }}" {{ old('course') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                        @endfor
-                                    </select>
-                                    @error('course')
+                                    <label for="individual_join_deadline" class="form-label">Срок вступления одиночных участников</label>
+                                    <input type="date" class="form-control @error('individual_join_deadline') is-invalid @enderror" 
+                                           id="individual_join_deadline" name="individual_join_deadline" value="{{ old('individual_join_deadline') }}">
+                                    @error('individual_join_deadline')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -114,21 +142,24 @@
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="team_id" class="form-label">Команда</label>
-                                    <select class="form-select @error('team_id') is-invalid @enderror" id="team_id" name="team_id">
-                                        <option value="">Выберите команду (необязательно)</option>
-                                        @foreach($teams as $team)
-                                            <option value="{{ $team->id }}" {{ old('team_id') == $team->id ? 'selected' : '' }}>
-                                                {{ $team->name }} ({{ $team->leader->name }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('team_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">Если у вас нет команды, оставьте поле пустым</div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="allows_individual_join" name="allows_individual_join" value="1" {{ old('allows_individual_join') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="allows_individual_join">
+                                            Разрешить вступление одиночных участников
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="deadline_description" class="form-label">Описание сроков</label>
+                            <textarea class="form-control @error('deadline_description') is-invalid @enderror" 
+                                      id="deadline_description" name="deadline_description" rows="3" 
+                                      placeholder="Дополнительная информация о сроках и требованиях...">{{ old('deadline_description') }}</textarea>
+                            @error('deadline_description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     
@@ -180,6 +211,34 @@
                             @error('tags')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_tags" class="form-label">Добавить свои теги</label>
+                            <input type="text" class="form-control @error('new_tags') is-invalid @enderror" 
+                                   id="new_tags" name="new_tags" value="{{ old('new_tags') }}" 
+                                   placeholder="Например: Дизайн, Маркетинг, Исследования (разделяйте запятыми)">
+                            @error('new_tags')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Если не нашли подходящий тег, добавьте свой. Разделяйте несколько тегов запятыми.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_technologies" class="form-label">Добавить свои технологии</label>
+                            <input type="text" class="form-control @error('new_technologies') is-invalid @enderror" 
+                                   id="new_technologies" name="new_technologies" value="{{ old('new_technologies') }}" 
+                                   placeholder="Например: React, Node.js, Python (разделяйте запятыми)">
+                            @error('new_technologies')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Если не нашли подходящую технологию, добавьте свою. Разделяйте несколько технологий запятыми.
+                            </div>
                         </div>
                     </div>
                     

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\Project;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +21,7 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Task::with(['creator', 'assignedTeam']);
+        $query = Task::with(['creator', 'assignedUser', 'project']);
 
         // Фильтр по статусу
         $status = $request->get('status', 'open');
@@ -59,10 +61,28 @@ class TaskController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Проверяем, что пользователь является администратором или лидером команды
+        if (!Auth::user()->isAdmin()) {
+            // Проверяем, что пользователь является лидером хотя бы одной команды
+            $userTeams = Team::where('leader_id', Auth::id())->get();
+            if ($userTeams->isEmpty()) {
+                abort(403, 'Только администраторы и лидеры команд могут создавать задачи.');
+            }
+        }
+
+        // Получаем только проекты, где пользователь является руководителем
+        $projects = Project::where('status', 'active')
+            ->where('created_by', Auth::id())
+            ->get();
         $teams = Team::where('status', 'active')->get();
-        return view('tasks.create', compact('teams'));
+        $users = User::all();
+        
+        // Если передан project_id, предварительно выберем проект
+        $selectedProject = $request->get('project_id') ? Project::find($request->get('project_id')) : null;
+        
+        return view('tasks.create', compact('projects', 'teams', 'users', 'selectedProject'));
     }
 
     /**
@@ -76,11 +96,9 @@ class TaskController extends Controller
             'requirements' => 'nullable|string',
             'difficulty' => 'required|in:easy,medium,hard',
             'type' => 'nullable|string|max:100',
-            'institute' => 'nullable|string|max:100',
-            'course' => 'nullable|integer|min:1|max:6',
-            'max_team_size' => 'required|integer|min:1|max:10',
             'deadline' => 'nullable|date|after:today',
-            'assigned_team_id' => 'nullable|exists:teams,id',
+            'project_id' => 'required|exists:projects,id',
+            'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
         $validated['created_by'] = Auth::id();
@@ -88,8 +106,8 @@ class TaskController extends Controller
 
         $task = Task::create($validated);
 
-        // Если задача назначена команде, обновляем статус
-        if ($request->filled('assigned_team_id')) {
+        // Если задача назначена пользователю, обновляем статус
+        if ($request->filled('assigned_user_id')) {
             $task->update([
                 'assigned_at' => now(),
                 'status' => 'in_progress'
@@ -105,7 +123,7 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
-        $task->load(['creator', 'assignedTeam']);
+        $task->load(['creator', 'assignedUser', 'project']);
         
         return view('tasks.show', compact('task'));
     }
@@ -120,9 +138,13 @@ class TaskController extends Controller
             abort(403, 'Только создатель задачи может редактировать задачу.');
         }
 
-        $teams = Team::where('status', 'active')->get();
+        // Получаем только проекты, где пользователь является руководителем
+        $projects = Project::where('status', 'active')
+            ->where('created_by', Auth::id())
+            ->get();
+        $users = User::all();
         
-        return view('tasks.edit', compact('task', 'teams'));
+        return view('tasks.edit', compact('task', 'projects', 'users'));
     }
 
     /**
@@ -142,11 +164,9 @@ class TaskController extends Controller
             'difficulty' => 'required|in:easy,medium,hard',
             'status' => 'required|in:open,in_progress,completed,closed',
             'type' => 'nullable|string|max:100',
-            'institute' => 'nullable|string|max:100',
-            'course' => 'nullable|integer|min:1|max:6',
-            'max_team_size' => 'required|integer|min:1|max:10',
             'deadline' => 'nullable|date|after:today',
-            'assigned_team_id' => 'nullable|exists:teams,id',
+            'project_id' => 'required|exists:projects,id',
+            'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
         $task->update($validated);
@@ -200,9 +220,9 @@ class TaskController extends Controller
      */
     public function complete(Task $task)
     {
-        // Проверяем, что пользователь является создателем задачи или участником назначенной команды
+        // Проверяем, что пользователь является создателем задачи или назначенным пользователем
         $canComplete = $task->created_by === Auth::id() || 
-                      ($task->assignedTeam && $task->assignedTeam->members->contains(Auth::id()));
+                      ($task->assigned_user_id === Auth::id());
 
         if (!$canComplete) {
             abort(403, 'Вы не можете завершить эту задачу.');

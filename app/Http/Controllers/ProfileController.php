@@ -92,12 +92,24 @@ class ProfileController extends Controller
             $user = Auth::user();
         }
 
-        $projects = Project::with(['tags', 'technologies', 'team'])
+        // Получаем проекты, созданные пользователем
+        $createdProjects = Project::with(['tags', 'technologies', 'team'])
             ->where('created_by', $user->id)
-            ->latest()
-            ->paginate(12);
+            ->latest();
 
-        return view('profile.projects', compact('user', 'projects'));
+        // Получаем проекты, в которых участвует пользователь через команды
+        $participatingProjects = Project::with(['tags', 'technologies', 'teams'])
+            ->whereHas('teams', function($query) use ($user) {
+                $query->whereHas('members', function($memberQuery) use ($user) {
+                    $memberQuery->where('user_id', $user->id);
+                });
+            })
+            ->latest();
+
+        // Объединяем и убираем дубликаты
+        $allProjects = $createdProjects->union($participatingProjects)->latest()->paginate(12);
+
+        return view('profile.projects', compact('user') + ['projects' => $allProjects]);
     }
 
     /**
@@ -109,7 +121,8 @@ class ProfileController extends Controller
             $user = Auth::user();
         }
 
-        $teams = $user->teams()->with(['leader', 'members', 'projects'])->get();
+        // Получаем команды, где пользователь является участником, но не руководителем проекта
+        $teams = $user->teamsAsMember()->with(['leader', 'members', 'projects'])->get();
         $ledTeams = $user->ledTeams()->with(['members', 'projects'])->get();
 
         return view('profile.teams', compact('user', 'teams', 'ledTeams'));

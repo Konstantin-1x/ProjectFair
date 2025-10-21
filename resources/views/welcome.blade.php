@@ -20,8 +20,11 @@
                     <a href="{{ route('projects.index') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-eye me-2"></i>Смотреть проекты
                     </a>
+                    <a href="{{ route('teams.index') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-users me-2"></i>Все команды
+                    </a>
                     @auth
-                        <a href="{{ route('projects.new.create') }}" class="btn btn-outline-light btn-lg">
+                        <a href="{{ route('projects.create') }}" class="btn btn-outline-light btn-lg">
                             <i class="fas fa-plus me-2"></i>Создать проект
                         </a>
                     @else
@@ -58,20 +61,6 @@
         <div class="card h-100 text-center">
             <div class="card-body">
                 <div class="text-primary mb-3">
-                    <i class="fas fa-tasks fa-3x"></i>
-                </div>
-                <h5 class="card-title">Банк задач</h5>
-                <p class="card-text">
-                    Публикация задач для решения студенческими командами с указанием сложности, 
-                    требований и сроков выполнения.
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 text-center">
-            <div class="card-body">
-                <div class="text-primary mb-3">
                     <i class="fas fa-users fa-3x"></i>
                 </div>
                 <h5 class="card-title">Командообразование</h5>
@@ -89,7 +78,7 @@
     <div class="col-12">
         <h3 class="text-center mb-4">Статистика платформы</h3>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-center">
             <div class="card-body">
                 <h2 class="text-primary">{{ \App\Models\Project::count() }}</h2>
@@ -97,15 +86,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h2 class="text-primary">{{ \App\Models\Task::count() }}</h2>
-                <p class="card-text">Задач</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-center">
             <div class="card-body">
                 <h2 class="text-primary">{{ \App\Models\Team::count() }}</h2>
@@ -113,7 +94,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-md-4 mb-3">
         <div class="card text-center">
             <div class="card-body">
                 <h2 class="text-primary">{{ \App\Models\User::count() }}</h2>

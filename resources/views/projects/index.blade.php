@@ -6,7 +6,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Студенческие проекты</h1>
     @auth
-        <a href="{{ route('projects.new.create') }}" class="btn btn-primary">
+        <a href="{{ route('projects.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Создать проект
         </a>
     @endauth
@@ -165,7 +165,7 @@
         <h3>Проекты не найдены</h3>
         <p class="text-muted">Пока нет проектов, соответствующих вашим критериям поиска.</p>
         @auth
-            <a href="{{ route('projects.new.create') }}" class="btn btn-primary">
+            <a href="{{ route('projects.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Создать первый проект
             </a>
         @endauth

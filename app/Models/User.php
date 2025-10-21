@@ -92,6 +92,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Get teams where user is a member but not a project leader
+     */
+    public function teamsAsMember()
+    {
+        return $this->belongsToMany(Team::class)
+            ->withPivot('role', 'joined_at')
+            ->withTimestamps()
+            ->whereDoesntHave('projects', function ($query) {
+                $query->where('created_by', $this->id);
+            });
+    }
+
+    /**
      * Get teams where user is a leader
      */
     public function ledTeams()
@@ -113,5 +126,37 @@ class User extends Authenticatable
     public function createdTasks()
     {
         return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /**
+     * Get team applications by user
+     */
+    public function teamApplications()
+    {
+        return $this->hasMany(TeamApplication::class);
+    }
+
+    /**
+     * Get pending team applications by user
+     */
+    public function pendingTeamApplications()
+    {
+        return $this->hasMany(TeamApplication::class)->where('status', 'pending');
+    }
+
+    /**
+     * Get approved team applications by user
+     */
+    public function approvedTeamApplications()
+    {
+        return $this->hasMany(TeamApplication::class)->where('status', 'approved');
+    }
+
+    /**
+     * Get rejected team applications by user
+     */
+    public function rejectedTeamApplications()
+    {
+        return $this->hasMany(TeamApplication::class)->where('status', 'rejected');
     }
 }

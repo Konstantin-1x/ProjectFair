@@ -17,4 +17,9 @@ class Tag extends Model
     {
         return $this->belongsToMany(Project::class);
     }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_tag');
+    }
 }

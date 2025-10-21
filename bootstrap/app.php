@@ -14,11 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'request.logger' => \App\Http\Middleware\RequestLogger::class,
+            'locale' => \App\Http\Middleware\SetLocale::class,
         ]);
         
         // Добавляем логирование для всех запросов
         $middleware->web(append: [
             \App\Http\Middleware\RequestLogger::class,
+            \App\Http\Middleware\SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

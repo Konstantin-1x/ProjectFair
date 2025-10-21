@@ -75,13 +75,46 @@
                     @endif
                 </div>
                 
+                <!-- Completion File -->
+                @if($project->status === 'completed' && $project->completion_file)
+                    <div class="alert alert-success mb-4">
+                        <h6><i class="fas fa-file-alt me-2"></i>Файл отчета проекта</h6>
+                        <p class="mb-2">Проект завершен {{ $project->completed_at->format('d.m.Y H:i') }}</p>
+                        <div class="d-flex align-items-center justify-content-between p-3 border rounded bg-light">
+                            <div>
+                                <i class="fas fa-file me-2 text-primary"></i>
+                                <strong>{{ basename($project->completion_file) }}</strong>
+                                @if(Storage::exists($project->completion_file))
+                                    <br><small class="text-muted">
+                                        Размер: {{ number_format(Storage::size($project->completion_file) / 1024, 2) }} KB
+                                    </small>
+                                @endif
+                            </div>
+                            <a href="{{ Storage::url($project->completion_file) }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download me-1"></i>Скачать отчет
+                            </a>
+                        </div>
+                    </div>
+                @endif
+                
                 <!-- Actions -->
                 @auth
                     @can('update', $project)
                         <div class="d-flex gap-2">
+                            <a href="{{ route('projects.tasks.index', $project) }}" class="btn btn-primary">
+                                <i class="fas fa-tasks me-2"></i>Управление задачами
+                            </a>
+                            <a href="{{ route('projects.teams.index', $project) }}" class="btn btn-info">
+                                <i class="fas fa-users me-2"></i>Управление командами
+                            </a>
                             <a href="{{ route('projects.edit', $project) }}" class="btn btn-warning">
                                 <i class="fas fa-edit me-2"></i>Редактировать
                             </a>
+                            @if($project->status !== 'completed')
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeProjectModal">
+                                    <i class="fas fa-check-circle me-2"></i>Завершить проект
+                                </button>
+                            @endif
                             @can('delete', $project)
                                 <form method="POST" action="{{ route('projects.destroy', $project) }}" 
                                       onsubmit="return confirm('Вы уверены, что хотите удалить этот проект?')">
@@ -94,6 +127,44 @@
                             @endcan
                         </div>
                     @endcan
+                    
+                    {{-- Кнопка для подачи заявки командой --}}
+                    @if(Auth::user() && !Auth::user()->isAdmin())
+                        @php
+                            $userTeams = Auth::user()->ledTeams()->whereIn('status', ['active', 'recruiting'])->get();
+                            $canApplyTeams = $userTeams->filter(function($team) use ($project) {
+                                return $project->canTeamApply($team->id);
+                            });
+                        @endphp
+                        
+                        @if($canApplyTeams->count() > 0)
+                            <div class="mt-3">
+                                <a href="{{ route('projects.team-applications.create', $project) }}" class="btn btn-success">
+                                    <i class="fas fa-users me-2"></i>Подать заявку командой
+                                </a>
+                                <small class="text-muted d-block mt-1">
+                                    У вас есть {{ $canApplyTeams->count() }} {{ Str::plural('команда', $canApplyTeams->count()) }}, которые могут подать заявку
+                                </small>
+                            </div>
+                        @elseif($userTeams->count() > 0)
+                            <div class="mt-3">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Ваши команды уже участвуют в этом проекте или подали заявку.</strong>
+                                </div>
+                            </div>
+                        @else
+                            <div class="mt-3">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Для подачи заявки необходимо быть лидером команды.</strong>
+                                    <a href="{{ route('teams.create') }}" class="btn btn-outline-primary btn-sm ms-2">
+                                        <i class="fas fa-plus me-1"></i>Создать команду
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
                 @endauth
             </div>
         </div>
@@ -218,5 +289,43 @@
         </div>
     </div>
 </div>
+
+<!-- Complete Project Modal -->
+@auth
+    @can('update', $project)
+        @if($project->status !== 'completed')
+            <div class="modal fade" id="completeProjectModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Завершить проект</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ route('projects.complete', $project) }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-body">
+                                <p>Вы уверены, что хотите завершить проект <strong>{{ $project->title }}</strong>?</p>
+                                <p class="text-muted">При завершении проекта необходимо прикрепить файл отчета (PDF, DOC, DOCX, TXT, ZIP, RAR).</p>
+                                
+                                <div class="mb-3">
+                                    <label for="completion_file" class="form-label">Файл отчета *</label>
+                                    <input type="file" class="form-control" id="completion_file" name="completion_file" 
+                                           accept=".pdf,.doc,.docx,.txt,.zip,.rar" required>
+                                    <div class="form-text">Максимальный размер файла: 10MB</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-1"></i>Завершить проект
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endcan
+@endauth
 
 @endsection

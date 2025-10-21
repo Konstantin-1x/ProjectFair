@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'Управление проектами')
+@section('title', __('Manage projects'))
 
 @section('content')
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-project-diagram me-2"></i>Управление проектами</h1>
-        <a href="{{ route('projects.new.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Создать проект
+        <h1><i class="fas fa-project-diagram me-2"></i>{{ __('Manage projects') }}</h1>
+        <a href="{{ route('projects.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>{{ __('Create project') }}
         </a>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-header">
-            <h5 class="mb-0">Список проектов</h5>
+            <h5 class="mb-0">{{ __('Projects list') }}</h5>
         </div>
         <div class="card-body">
             @if ($projects->isEmpty())
                 <div class="alert alert-info mb-0" role="alert">
-                    Проектов пока нет.
+                    {{ __('No projects yet.') }}
                 </div>
             @else
                 <div class="table-responsive">
@@ -26,14 +26,14 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Название</th>
-                                <th>Создатель</th>
-                                <th>Статус</th>
-                                <th>Тип</th>
-                                <th>Институт</th>
-                                <th>Команда</th>
-                                <th>Создан</th>
-                                <th>Действия</th>
+                                <th>{{ __('Title') }}</th>
+                                <th>{{ __('Creator') }}</th>
+                                <th>{{ __('Status') }}</th>
+                                <th>{{ __('Type') }}</th>
+                                <th>{{ __('Institute') }}</th>
+                                <th>{{ __('Team') }}</th>
+                                <th>{{ __('Created at') }}</th>
+                                <th>{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,13 +54,13 @@
                                     <td>
                                         @switch($project->status)
                                             @case('active')
-                                                <span class="badge bg-success">Активный</span>
+                                                <span class="badge bg-success">{{ __('Active') }}</span>
                                                 @break
                                             @case('completed')
-                                                <span class="badge bg-primary">Завершен</span>
+                                                <span class="badge bg-primary">{{ __('Completed') }}</span>
                                                 @break
                                             @case('archived')
-                                                <span class="badge bg-secondary">Архивный</span>
+                                                <span class="badge bg-secondary">{{ __('Archived') }}</span>
                                                 @break
                                             @default
                                                 <span class="badge bg-light text-dark">{{ $project->status }}</span>
@@ -74,7 +74,7 @@
                                                 {{ $project->team->name }}
                                             </a>
                                         @else
-                                            <span class="text-muted">Не назначена</span>
+                                            <span class="text-muted">{{ __('Not assigned') }}</span>
                                         @endif
                                     </td>
                                     <td>
@@ -92,7 +92,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="return confirm('Вы уверены, что хотите удалить этот проект?')">
+                                                        onclick="return confirm('{{ __('Are you sure you want to delete this project?') }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -104,7 +104,7 @@
                     </table>
                 </div>
                 <div class="mt-4">
-                    {{ $projects->links() }}
+                    {{ $projects->links('pagination::bootstrap-4') }}
                 </div>
             @endif
         </div>

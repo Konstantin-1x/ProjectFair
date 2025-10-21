@@ -1,0 +1,246 @@
+# Требования для проекта "Витрина студенческих проектов СевГУ"
+
+## Системные требования
+
+### Минимальные требования:
+- **PHP**: 8.2.0 или выше
+- **Память**: 512 MB RAM
+- **Дисковое пространство**: 100 MB
+- **Операционная система**: Windows 10+, Ubuntu 18.04+, macOS 10.15+
+
+### Рекомендуемые требования:
+- **PHP**: 8.3.0 или выше
+- **Память**: 1 GB RAM
+- **Дисковое пространство**: 500 MB
+- **Операционная система**: Windows 11+, Ubuntu 20.04+, macOS 12+
+
+## Необходимые компоненты
+
+### Обязательные:
+- **Git** - для клонирования репозитория
+- **PHP 8.2+** - основной язык программирования
+- **Composer** - менеджер зависимостей PHP
+- **Node.js 18+** - для сборки фронтенда
+- **npm** - менеджер пакетов Node.js
+
+### База данных (выберите одну):
+- **SQLite 3** (рекомендуется для разработки)
+- **MySQL 8.0+** (для продакшена)
+- **PostgreSQL 13+** (альтернатива)
+
+### Веб-сервер (для продакшена):
+- **Apache 2.4+** с mod_rewrite
+- **Nginx 1.18+** с PHP-FPM
+
+## PHP расширения
+
+### Обязательные расширения:
+- `php-cli` - командная строка PHP
+- `php-mbstring` - работа с многобайтовыми строками
+- `php-xml` - работа с XML
+- `php-curl` - HTTP-запросы
+- `php-zip` - работа с архивами
+- `php-sqlite3` - для SQLite (если используется)
+- `php-mysql` - для MySQL (если используется)
+- `php-pgsql` - для PostgreSQL (если используется)
+
+### Рекомендуемые расширения:
+- `php-gd` - работа с изображениями
+- `php-imagick` - расширенная работа с изображениями
+- `php-redis` - для кэширования (опционально)
+- `php-memcached` - для кэширования (опционально)
+
+## Проверка требований
+
+### Скрипт проверки для Linux/macOS:
+```bash
+#!/bin/bash
+echo "Проверка требований для проекта..."
+
+# Проверка PHP
+if command -v php &> /dev/null; then
+    PHP_VERSION=$(php -r "echo PHP_VERSION;")
+    echo "✅ PHP: $PHP_VERSION"
+else
+    echo "❌ PHP не найден"
+fi
+
+# Проверка Composer
+if command -v composer &> /dev/null; then
+    COMPOSER_VERSION=$(composer --version | cut -d' ' -f3)
+    echo "✅ Composer: $COMPOSER_VERSION"
+else
+    echo "❌ Composer не найден"
+fi
+
+# Проверка Node.js
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version)
+    echo "✅ Node.js: $NODE_VERSION"
+else
+    echo "❌ Node.js не найден"
+fi
+
+# Проверка npm
+if command -v npm &> /dev/null; then
+    NPM_VERSION=$(npm --version)
+    echo "✅ npm: $NPM_VERSION"
+else
+    echo "❌ npm не найден"
+fi
+
+# Проверка Git
+if command -v git &> /dev/null; then
+    GIT_VERSION=$(git --version | cut -d' ' -f3)
+    echo "✅ Git: $GIT_VERSION"
+else
+    echo "❌ Git не найден"
+fi
+```
+
+### Скрипт проверки для Windows:
+```batch
+@echo off
+echo Проверка требований для проекта...
+
+:: Проверка PHP
+php --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f "tokens=2" %%i in ('php --version') do (
+        echo ✅ PHP: %%i
+        goto :php_found
+    )
+    :php_found
+) else (
+    echo ❌ PHP не найден
+)
+
+:: Проверка Composer
+composer --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f "tokens=3" %%i in ('composer --version') do (
+        echo ✅ Composer: %%i
+        goto :composer_found
+    )
+    :composer_found
+) else (
+    echo ❌ Composer не найден
+)
+
+:: Проверка Node.js
+node --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f %%i in ('node --version') do echo ✅ Node.js: %%i
+) else (
+    echo ❌ Node.js не найден
+)
+
+:: Проверка npm
+npm --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f %%i in ('npm --version') do echo ✅ npm: %%i
+) else (
+    echo ❌ npm не найден
+)
+
+:: Проверка Git
+git --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f "tokens=3" %%i in ('git --version') do (
+        echo ✅ Git: %%i
+        goto :git_found
+    )
+    :git_found
+) else (
+    echo ❌ Git не найден
+)
+```
+
+## Установка компонентов
+
+### Windows:
+1. **XAMPP** - https://www.apachefriends.org/download.html
+2. **Composer** - https://getcomposer.org/download/
+3. **Node.js** - https://nodejs.org/
+4. **Git** - https://git-scm.com/downloads
+
+### Ubuntu/Debian:
+```bash
+sudo apt update
+sudo apt install php8.2 php8.2-cli php8.2-mysql php8.2-sqlite3 php8.2-xml php8.2-mbstring php8.2-curl php8.2-zip composer nodejs npm git
+```
+
+### CentOS/RHEL:
+```bash
+sudo yum install php82 php82-cli php82-mysql php82-sqlite3 php82-xml php82-mbstring php82-curl php82-zip composer nodejs npm git
+```
+
+### macOS:
+```bash
+# Установка Homebrew (если не установлен)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Установка компонентов
+brew install php composer node git
+```
+
+## Проверка после установки
+
+### Тест PHP:
+```bash
+php -v
+php -m | grep -E "(mbstring|xml|curl|zip)"
+```
+
+### Тест Composer:
+```bash
+composer --version
+```
+
+### Тест Node.js:
+```bash
+node --version
+npm --version
+```
+
+### Тест Git:
+```bash
+git --version
+```
+
+## Рекомендации по производительности
+
+### Для разработки:
+- **RAM**: 2 GB+
+- **CPU**: 2 ядра+
+- **SSD**: рекомендуется
+
+### Для продакшена:
+- **RAM**: 4 GB+
+- **CPU**: 4 ядра+
+- **SSD**: обязательно
+- **CDN**: рекомендуется для статических файлов
+
+## Безопасность
+
+### Рекомендуемые настройки:
+- **HTTPS**: обязательно для продакшена
+- **Firewall**: настройте правила доступа
+- **Backup**: регулярное резервное копирование
+- **Updates**: регулярные обновления системы
+
+### Проверка безопасности:
+```bash
+# Проверка версии PHP
+php -v
+
+# Проверка расширений безопасности
+php -m | grep -E "(openssl|hash|filter)"
+
+# Проверка настроек PHP
+php -i | grep -E "(allow_url_fopen|expose_php|display_errors)"
+```
+
+---
+
+**Примечание**: Все версии указаны как минимальные. Рекомендуется использовать более новые версии для лучшей производительности и безопасности.
