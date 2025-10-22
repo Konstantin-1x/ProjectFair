@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Витрина студенческих проектов СевГУ')</title>
+    <title>@yield('title', __('SevSU Project Showcase'))</title>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -25,7 +25,7 @@
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     <i class="fas fa-graduation-cap me-2"></i>
-                    Витрина проектов СевГУ
+                    {{ __('SevSU Project Showcase') }}
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>
@@ -35,29 +35,29 @@
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('home') }}">Главная</a>
+                            <a class="nav-link" href="{{ route('home') }}">{{ __('Home') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('projects.index') }}">Проекты</a>
+                            <a class="nav-link" href="{{ route('projects.index') }}">{{ __('Projects') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('teams.index') }}">Команды</a>
+                            <a class="nav-link" href="{{ route('teams.index') }}">{{ __('Teams') }}</a>
                         </li>
                         @auth
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('teams.my-applications') }}">
-                                    <i class="fas fa-file-alt me-1"></i>Мои заявки
+                                    <i class="fas fa-file-alt me-1"></i>{{ __('My applications') }}
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('my-team-applications') }}">
-                                    <i class="fas fa-users me-1"></i>Заявки команд
+                                    <i class="fas fa-users me-1"></i>{{ __('Team applications') }}
                                 </a>
                             </li>
                             @if(auth()->user()->isAdmin())
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('admin.dashboard') }}">
-                                        <i class="fas fa-cog me-1"></i>Админ-панель
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>{{ __('Teacher Panel') }}
                                     </a>
                                 </li>
                             @endif
@@ -121,47 +121,47 @@
                                     
                                     <!-- Main Actions -->
                                     <a class="dropdown-item" href="{{ route('home') }}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Личный кабинет
+                                        <i class="fas fa-tachometer-alt me-2"></i>{{ __('Personal cabinet') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('profile.show') }}">
-                                        <i class="fas fa-user me-2"></i>Мой профиль
+                                        <i class="fas fa-user me-2"></i>{{ __('My profile') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('profile.projects') }}">
-                                        <i class="fas fa-project-diagram me-2"></i>Мои проекты
+                                        <i class="fas fa-project-diagram me-2"></i>{{ __('My projects') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('profile.teams') }}">
-                                        <i class="fas fa-users me-2"></i>Мои команды
+                                        <i class="fas fa-users me-2"></i>{{ __('My teams') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('teams.my-applications') }}">
-                                        <i class="fas fa-file-alt me-2"></i>Мои заявки
+                                        <i class="fas fa-file-alt me-2"></i>{{ __('My applications') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('my-team-applications') }}">
-                                        <i class="fas fa-users me-2"></i>Заявки команд
+                                        <i class="fas fa-users me-2"></i>{{ __('Team applications') }}
                                     </a>
                                     
                                     <div class="dropdown-divider"></div>
                                     
                                     <!-- Create Actions -->
                                     <a class="dropdown-item" href="{{ route('projects.create') }}">
-                                        <i class="fas fa-plus me-2"></i>Создать проект
+                                        <i class="fas fa-plus me-2"></i>{{ __('Create project') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('teams.create') }}">
-                                        <i class="fas fa-users me-2"></i>Создать команду
+                                        <i class="fas fa-users me-2"></i>{{ __('Create team') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('tasks.create') }}">
-                                        <i class="fas fa-tasks me-2"></i>Создать задачу
+                                        <i class="fas fa-tasks me-2"></i>{{ __('Create task') }}
                                     </a>
                                     
                                     @if(Auth::user()->isAdmin())
                                     <div class="dropdown-divider"></div>
                                     <div class="dropdown-header">
-                                        <i class="fas fa-cog me-2"></i>Администрирование
+                                        <i class="fas fa-chalkboard-teacher me-2"></i>{{ __('Teacher') }}
                                     </div>
                                     <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Админ-панель
+                                        <i class="fas fa-tachometer-alt me-2"></i>{{ __('Teacher Panel') }}
                                     </a>
                                     <a class="dropdown-item" href="{{ route('admin.analytics') }}">
-                                        <i class="fas fa-chart-bar me-2"></i>Аналитика
+                                        <i class="fas fa-chart-bar me-2"></i>{{ __('Analytics') }}
                                     </a>
                                     @endif
                                     
@@ -169,14 +169,14 @@
                                     
                                     <!-- Settings -->
                                     <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                        <i class="fas fa-cog me-2"></i>Настройки
+                                        <i class="fas fa-cog me-2"></i>{{ __('Settings') }}
                                     </a>
                                     
                                     <!-- Logout -->
                                     <a class="dropdown-item text-danger" href="{{ route('logout') }}"
                                        onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                        <i class="fas fa-sign-out-alt me-2"></i>{{ __('Logout') }}
                                     </a>
 
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

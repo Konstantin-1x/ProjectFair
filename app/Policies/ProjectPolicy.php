@@ -37,6 +37,7 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
+        // Только создатель проекта или преподаватель (администратор) может редактировать
         return $user->isAdmin() || $project->created_by === $user->id;
     }
 

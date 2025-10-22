@@ -126,6 +126,24 @@
                                 </form>
                             @endcan
                         </div>
+                        @else
+                        {{-- Кнопки для участников команд --}}
+                        @php
+                            $isProjectMember = false;
+                            foreach($project->teams as $team) {
+                                if($team->members()->where('user_id', Auth::id())->exists()) {
+                                    $isProjectMember = true;
+                                    break;
+                                }
+                            }
+                        @endphp
+                        @if($isProjectMember)
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('projects.tasks.index', $project) }}" class="btn btn-primary">
+                                    <i class="fas fa-tasks me-2"></i>Задачи проекта
+                                </a>
+                            </div>
+                        @endif
                     @endcan
                     
                     {{-- Кнопка для подачи заявки командой --}}
@@ -169,33 +187,65 @@
             </div>
         </div>
         
-        <!-- Team Information -->
-        @if($project->team)
+        <!-- Teams Information -->
+        @if($project->teams->count() > 0)
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Команда проекта</h5>
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Команды проекта ({{ $project->teams->count() }})</h5>
             </div>
             <div class="card-body">
-                <h6>Лидер команды: {{ $project->team->leader->name }}</h6>
-                <p class="text-muted">{{ $project->team->description }}</p>
-                
-                <h6>Участники команды:</h6>
-                <div class="row">
-                    @foreach($project->team->members as $member)
-                    <div class="col-md-6 mb-2">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                                 style="width: 40px; height: 40px;">
-                                {{ $member->initials() }}
-                            </div>
+                @foreach($project->teams as $team)
+                    <div class="mb-4 {{ !$loop->last ? 'border-bottom pb-4' : '' }}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <div class="fw-bold">{{ $member->name }}</div>
-                                <small class="text-muted">{{ $member->pivot->role }}</small>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-users me-2"></i>{{ $team->name }}
+                                    @if($team->pivot->status === 'active')
+                                        <span class="badge bg-success ms-2">Активная</span>
+                                    @elseif($team->pivot->status === 'pending')
+                                        <span class="badge bg-warning ms-2">Ожидает</span>
+                                    @endif
+                                </h6>
+                                <p class="text-muted mb-2">{{ $team->description }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-user-tie me-1"></i>Лидер: {{ $team->leader->name }}
+                                    @if($team->pivot->joined_at)
+                                        | <i class="fas fa-calendar me-1"></i>Присоединилась: {{ $team->pivot->joined_at instanceof \Carbon\Carbon ? $team->pivot->joined_at->format('d.m.Y') : $team->pivot->joined_at }}
+                                    @endif
+                                </small>
                             </div>
                         </div>
+                        
+                        @if($team->pivot->role_description)
+                            <div class="alert alert-info py-2 px-3 mb-3">
+                                <small><strong>Роль в проекте:</strong> {{ $team->pivot->role_description }}</small>
+                            </div>
+                        @endif
+                        
+                        <h6 class="mb-2">Участники команды ({{ $team->members->count() }}):</h6>
+                        <div class="row">
+                            @foreach($team->members as $member)
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                         style="width: 40px; height: 40px;">
+                                        {{ $member->initials() }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ $member->name }}</div>
+                                        <small class="text-muted">
+                                            {{ $member->pivot->role ?? 'Участник' }}
+                                            @if($member->id === $team->leader_id)
+                                                <span class="badge bg-warning text-dark ms-1">Лидер</span>
+                                            @endif
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
-                    @endforeach
-                </div>
+                @endforeach
             </div>
         </div>
         @endif

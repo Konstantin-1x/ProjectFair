@@ -72,16 +72,13 @@
                                 @error('project_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Задача будет привязана к выбранному проекту (только ваши проекты)</div>
+                                <div class="form-text">Задача будет привязана к выбранному проекту</div>
                             </div>
                         @else
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>У вас нет активных проектов!</strong>
+                                <strong>В системе нет активных проектов!</strong>
                                 <p class="mb-2">Для создания задачи необходимо сначала создать проект.</p>
-                                <a href="{{ route('projects.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus me-1"></i>Создать проект
-                                </a>
                             </div>
                         @endif
                     </div>

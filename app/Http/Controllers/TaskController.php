@@ -63,19 +63,13 @@ class TaskController extends Controller
      */
     public function create(Request $request)
     {
-        // Проверяем, что пользователь является администратором или лидером команды
+        // Только преподаватели могут создавать задачи
         if (!Auth::user()->isAdmin()) {
-            // Проверяем, что пользователь является лидером хотя бы одной команды
-            $userTeams = Team::where('leader_id', Auth::id())->get();
-            if ($userTeams->isEmpty()) {
-                abort(403, 'Только администраторы и лидеры команд могут создавать задачи.');
-            }
+            abort(403, 'Только преподаватели могут создавать задачи.');
         }
 
-        // Получаем только проекты, где пользователь является руководителем
-        $projects = Project::where('status', 'active')
-            ->where('created_by', Auth::id())
-            ->get();
+        // Получаем все активные проекты для преподавателя
+        $projects = Project::where('status', 'active')->get();
         $teams = Team::where('status', 'active')->get();
         $users = User::all();
         
@@ -133,15 +127,13 @@ class TaskController extends Controller
      */
     public function edit(Task $task)
     {
-        // Проверяем, что пользователь является создателем задачи
-        if ($task->created_by !== Auth::id()) {
-            abort(403, 'Только создатель задачи может редактировать задачу.');
+        // Только преподаватели могут редактировать задачи
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут редактировать задачи.');
         }
 
-        // Получаем только проекты, где пользователь является руководителем
-        $projects = Project::where('status', 'active')
-            ->where('created_by', Auth::id())
-            ->get();
+        // Получаем все активные проекты для преподавателя
+        $projects = Project::where('status', 'active')->get();
         $users = User::all();
         
         return view('tasks.edit', compact('task', 'projects', 'users'));
@@ -152,9 +144,9 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
-        // Проверяем, что пользователь является создателем задачи
-        if ($task->created_by !== Auth::id()) {
-            abort(403, 'Только создатель задачи может редактировать задачу.');
+        // Только преподаватели могут редактировать задачи
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут редактировать задачи.');
         }
 
         $validated = $request->validate([
@@ -180,9 +172,9 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        // Проверяем, что пользователь является создателем задачи
-        if ($task->created_by !== Auth::id()) {
-            abort(403, 'Только создатель задачи может удалить задачу.');
+        // Только преподаватели могут удалять задачи
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут удалять задачи.');
         }
 
         $task->delete();

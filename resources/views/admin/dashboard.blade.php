@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', __('Admin Panel'))
+@section('title', 'Панель преподавателя')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-tachometer-alt me-2"></i>{{ __('Admin Panel') }}</h1>
+    <h1><i class="fas fa-chalkboard-teacher me-2"></i>Панель преподавателя</h1>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.analytics') }}" class="btn btn-outline-primary">
             <i class="fas fa-chart-bar me-2"></i>{{ __('Analytics') }}

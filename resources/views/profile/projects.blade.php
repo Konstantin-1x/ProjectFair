@@ -125,7 +125,7 @@
                                 <a href="{{ route('projects.show', $project) }}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye me-1"></i>Подробнее
                                 </a>
-                                @if(Auth::id() === $user->id)
+                                @if(Auth::id() === $user->id && (Auth::user()->isAdmin() || $project->created_by === Auth::id()))
                                     <a href="{{ route('projects.edit', $project) }}" class="btn btn-outline-secondary btn-sm">
                                         <i class="fas fa-edit me-1"></i>Редактировать
                                     </a>

@@ -13,9 +13,11 @@
                     <p class="text-muted mb-0">{{ $project->title }}</p>
                 </div>
                 <div>
-                    <a href="{{ route('projects.tasks.create', $project) }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Добавить задачу
-                    </a>
+                    @if(Auth::user()->isAdmin())
+                        <a href="{{ route('projects.tasks.create', $project) }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Добавить задачу
+                        </a>
+                    @endif
                     <a href="{{ route('projects.show', $project) }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-2"></i>К проекту
                     </a>
@@ -72,9 +74,13 @@
                                         </p>
                                         
                                         <div class="mb-2">
-                                            <span class="badge bg-{{ $task->status === 'completed' ? 'success' : 'secondary' }}">
-                                                {{ $task->status === 'completed' ? 'Выполнено' : 'В работе' }}
-                                            </span>
+                                            @if($task->is_rejected)
+                                                <span class="badge bg-danger">Отклонено</span>
+                                            @elseif($task->status === 'completed')
+                                                <span class="badge bg-success">Выполнено</span>
+                                            @else
+                                                <span class="badge bg-secondary">В работе</span>
+                                            @endif
                                             <span class="badge bg-{{ $task->difficulty === 'easy' ? 'success' : ($task->difficulty === 'medium' ? 'warning' : 'danger') }}">
                                                 {{ ucfirst($task->difficulty) }}
                                             </span>
@@ -93,27 +99,61 @@
                                             </small>
                                         @endif
                                         
-                                        @if($task->status === 'completed' && $task->completed_at)
+                                        @if($task->is_rejected)
+                                            <div class="alert alert-danger py-2 px-3 mb-2">
+                                                <small>
+                                                    <i class="fas fa-times-circle me-1"></i>
+                                                    <strong>Отклонено:</strong> {{ $task->rejection_reason }}
+                                                </small>
+                                            </div>
+                                        @elseif($task->status === 'completed' && $task->completed_at)
                                             <small class="text-success d-block mb-2">
                                                 <i class="fas fa-check me-1"></i>
                                                 Завершено: {{ $task->completed_at->format('d.m.Y H:i') }}
                                             </small>
                                         @endif
                                         
-                                        <div class="d-flex gap-2">
+                                        <div class="d-flex gap-2 flex-wrap">
                                             <a href="{{ route('projects.tasks.show', [$project, $task]) }}" class="btn btn-outline-primary btn-sm">
                                                 <i class="fas fa-eye me-1"></i>Подробнее
                                             </a>
                                             
-                                            @if($task->status !== 'completed')
-                                                <button type="button" class="btn btn-success btn-sm" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#completeTaskModal{{ $task->id }}">
-                                                    <i class="fas fa-check me-1"></i>Завершить
-                                                </button>
+                                            @if(Auth::user()->isAdmin())
+                                                <a href="{{ route('projects.tasks.edit', [$project, $task]) }}" class="btn btn-outline-warning btn-sm">
+                                                    <i class="fas fa-edit me-1"></i>Редактировать
+                                                </a>
                                             @endif
                                             
-                                            @if(!$task->is_basic_task)
+                                            @if($task->status !== 'completed' && !$task->is_rejected)
+                                                @php
+                                                    $isProjectMember = false;
+                                                    foreach($project->teams as $team) {
+                                                        if($team->members()->where('user_id', Auth::id())->exists()) {
+                                                            $isProjectMember = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if(Auth::user()->isAdmin() || $isProjectMember)
+                                                    <button type="button" class="btn btn-success btn-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#completeTaskModal{{ $task->id }}">
+                                                        <i class="fas fa-check me-1"></i>Завершить
+                                                    </button>
+                                                @endif
+                                            @endif
+                                            
+                                            @if(Auth::user()->isAdmin())
+                                                @if($task->status === 'completed' && !$task->is_rejected)
+                                                    <button type="button" class="btn btn-warning btn-sm" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#rejectTaskModal{{ $task->id }}">
+                                                        <i class="fas fa-times me-1"></i>Отклонить
+                                                    </button>
+                                                @endif
+                                            @endif
+                                            
+                                            @if(!$task->is_basic_task && Auth::user()->isAdmin())
                                                 <form method="POST" action="{{ route('projects.tasks.destroy', [$project, $task]) }}" 
                                                       class="d-inline" 
                                                       onsubmit="return confirm('Удалить задачу?')">
@@ -160,8 +200,11 @@
                 <div class="modal-body">
                     <p>Вы уверены, что хотите отметить задачу <strong>"{{ $task->title }}"</strong> как выполненную?</p>
                     <div class="mb-3">
-                        <label for="completion_text{{ $task->id }}" class="form-label">Комментарий к завершению (необязательно):</label>
-                        <textarea class="form-control" id="completion_text{{ $task->id }}" name="completion_text" rows="3" placeholder="Опишите, что было выполнено..."></textarea>
+                        <label for="completion_text{{ $task->id }}" class="form-label">Отчет о выполнении <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('completion_text') is-invalid @enderror" 
+                                  id="completion_text{{ $task->id }}" name="completion_text" rows="4" 
+                                  placeholder="Опишите, что было выполнено, какие результаты получены, какие проблемы возникли..." required></textarea>
+                        <div class="form-text">Обязательно опишите результаты работы по задаче</div>
                     </div>
                     <div class="mb-3">
                         <label for="completion_files{{ $task->id }}" class="form-label">Файлы результата (необязательно):</label>
@@ -174,6 +217,47 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-check me-1"></i>Завершить задачу
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+@endforeach
+
+<!-- Модальные окна для отклонения задач -->
+@foreach($tasks as $task)
+@if($task->status === 'completed' && !$task->is_rejected && Auth::user()->isAdmin())
+<div class="modal fade" id="rejectTaskModal{{ $task->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Отклонить выполнение задачи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('projects.tasks.reject', [$project, $task]) }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <p>Вы уверены, что хотите отклонить выполнение задачи <strong>"{{ $task->title }}"</strong>?</p>
+                    <div class="mb-3">
+                        <label for="rejection_reason{{ $task->id }}" class="form-label">Причина отклонения <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('rejection_reason') is-invalid @enderror" 
+                                  id="rejection_reason{{ $task->id }}" name="rejection_reason" rows="4" 
+                                  placeholder="Укажите причину отклонения выполнения задачи..." required></textarea>
+                        <div class="form-text">Задача будет возвращена в статус "Открыта" и участники смогут переделать её</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_files{{ $task->id }}" class="form-label">Прикрепить файлы (необязательно):</label>
+                        <input type="file" class="form-control" id="rejection_files{{ $task->id }}" name="rejection_files[]" 
+                               accept=".pdf,.doc,.docx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif" multiple>
+                        <div class="form-text">Поддерживаемые форматы: PDF, DOC, DOCX, TXT, ZIP, RAR, JPG, JPEG, PNG, GIF. Максимальный размер каждого файла: 10MB</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-times me-1"></i>Отклонить выполнение
                     </button>
                 </div>
             </form>

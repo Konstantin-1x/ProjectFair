@@ -50,7 +50,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/create', [ProjectTaskController::class, 'create'])->name('create');
         Route::post('/', [ProjectTaskController::class, 'store'])->name('store');
         Route::get('/{task}', [ProjectTaskController::class, 'show'])->name('show');
+        Route::get('/{task}/edit', [ProjectTaskController::class, 'edit'])->name('edit');
+        Route::put('/{task}', [ProjectTaskController::class, 'update'])->name('update');
         Route::post('/{task}/complete', [ProjectTaskController::class, 'complete'])->name('complete');
+        Route::post('/{task}/reject', [ProjectTaskController::class, 'reject'])->name('reject');
+        Route::post('/{task}/approve', [ProjectTaskController::class, 'approve'])->name('approve');
+        Route::post('/{task}/comment', [ProjectTaskController::class, 'addComment'])->name('comment');
         Route::delete('/{task}', [ProjectTaskController::class, 'destroy'])->name('destroy');
     });
 
@@ -78,6 +83,7 @@ Route::middleware('auth')->group(function () {
 
     // Задачи
     Route::resource('tasks', TaskController::class);
+    Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
 
     // Команды
     Route::resource('teams', TeamController::class);

@@ -24,6 +24,10 @@ class Task extends Model
         'completion_file',
         'is_basic_task',
         'order',
+        'is_rejected',
+        'rejection_reason',
+        'rejected_at',
+        'rejected_by',
     ];
 
     protected $casts = [
@@ -31,6 +35,8 @@ class Task extends Model
         'assigned_at' => 'datetime',
         'completed_at' => 'datetime',
         'is_basic_task' => 'boolean',
+        'is_rejected' => 'boolean',
+        'rejected_at' => 'datetime',
     ];
 
     public function creator(): BelongsTo
@@ -48,9 +54,19 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     public function files()
     {
         return $this->hasMany(TaskFile::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)->orderBy('created_at');
     }
 
     public function completeTask($completionText = null, $completionFile = null)
@@ -76,5 +92,39 @@ class Task extends Model
     public function hasCompletionText()
     {
         return !is_null($this->completion_text);
+    }
+
+    public function isRejected()
+    {
+        return $this->is_rejected;
+    }
+
+    public function reject($reason, $rejectedBy, $attachedFiles = [])
+    {
+        $this->update([
+            'is_rejected' => true,
+            'rejection_reason' => $reason,
+            'rejected_at' => now(),
+            'rejected_by' => $rejectedBy,
+            'status' => 'open', // Возвращаем задачу в статус "открыта"
+        ]);
+
+        // Создаем комментарий об отклонении
+        $this->comments()->create([
+            'user_id' => $rejectedBy,
+            'comment' => $reason,
+            'type' => 'rejection',
+            'attached_files' => $attachedFiles,
+        ]);
+    }
+
+    public function approve()
+    {
+        $this->update([
+            'is_rejected' => false,
+            'rejection_reason' => null,
+            'rejected_at' => null,
+            'rejected_by' => null,
+        ]);
     }
 }

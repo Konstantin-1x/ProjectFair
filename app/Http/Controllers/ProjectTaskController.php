@@ -19,12 +19,23 @@ class ProjectTaskController extends Controller
      */
     public function index(Project $project)
     {
-        // Загружаем команду проекта
-        $project->load('team');
+        // Загружаем команды проекта
+        $project->load('teams.members');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может управлять задачами проекта.');
+        // Проверяем права доступа: преподаватели или участники команд проекта
+        $isAdmin = Auth::user()->isAdmin();
+        $isProjectMember = false;
+        
+        // Проверяем, является ли пользователь участником любой команды проекта
+        foreach ($project->teams as $team) {
+            if ($team->members()->where('user_id', Auth::id())->exists()) {
+                $isProjectMember = true;
+                break;
+            }
+        }
+        
+        if (!$isAdmin && !$isProjectMember) {
+            abort(403, 'Только преподаватели или участники команд проекта могут просматривать задачи.');
         }
 
         $tasks = $project->tasks()->orderBy('order')->get();
@@ -41,9 +52,9 @@ class ProjectTaskController extends Controller
         // Загружаем команду проекта
         $project->load('team');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может создавать задачи проекта.');
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут создавать задачи проекта.');
         }
 
         return view('projects.tasks.create', compact('project'));
@@ -57,9 +68,9 @@ class ProjectTaskController extends Controller
         // Загружаем команду проекта
         $project->load('team');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может создавать задачи проекта.');
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут создавать задачи проекта.');
         }
 
         $validated = $request->validate([
@@ -94,16 +105,81 @@ class ProjectTaskController extends Controller
             abort(404);
         }
 
+        // Загружаем команды проекта
+        $project->load('teams.members');
+        
+        // Проверяем права доступа: преподаватели или участники команд проекта
+        $isAdmin = Auth::user()->isAdmin();
+        $isProjectMember = false;
+        
+        // Проверяем, является ли пользователь участником любой команды проекта
+        foreach ($project->teams as $team) {
+            if ($team->members()->where('user_id', Auth::id())->exists()) {
+                $isProjectMember = true;
+                break;
+            }
+        }
+        
+        if (!$isAdmin && !$isProjectMember) {
+            abort(403, 'Только преподаватели или участники команд проекта могут просматривать задачи.');
+        }
+
+        $task->load(['files', 'comments.user']);
+        return view('projects.tasks.show', compact('project', 'task'));
+    }
+
+    /**
+     * Показать форму редактирования задачи
+     */
+    public function edit(Project $project, Task $task)
+    {
+        // Проверяем, что задача принадлежит проекту
+        if ($task->project_id !== $project->id) {
+            abort(404);
+        }
+
         // Загружаем команду проекта
         $project->load('team');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может просматривать задачи проекта.');
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут редактировать задачи проекта.');
         }
 
-        $task->load('files');
-        return view('projects.tasks.show', compact('project', 'task'));
+        return view('projects.tasks.edit', compact('project', 'task'));
+    }
+
+    /**
+     * Обновить задачу
+     */
+    public function update(Request $request, Project $project, Task $task)
+    {
+        // Проверяем, что задача принадлежит проекту
+        if ($task->project_id !== $project->id) {
+            abort(404);
+        }
+
+        // Загружаем команду проекта
+        $project->load('team');
+        
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут редактировать задачи проекта.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'nullable|string|max:100',
+            'difficulty' => 'required|in:easy,medium,hard',
+            'deadline' => 'nullable|date|after:today',
+            'status' => 'required|in:open,in_progress,completed,closed',
+        ]);
+
+        $task->update($validated);
+
+        return redirect()->route('projects.tasks.index', $project)
+            ->with('success', 'Задача успешно обновлена!');
     }
 
     /**
@@ -116,16 +192,27 @@ class ProjectTaskController extends Controller
             abort(404);
         }
 
-        // Загружаем команду проекта
-        $project->load('team');
+        // Загружаем команды проекта
+        $project->load('teams.members');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может завершать задачи проекта.');
+        // Проверяем права доступа: преподаватели или участники команд проекта
+        $isAdmin = Auth::user()->isAdmin();
+        $isProjectMember = false;
+        
+        // Проверяем, является ли пользователь участником любой команды проекта
+        foreach ($project->teams as $team) {
+            if ($team->members()->where('user_id', Auth::id())->exists()) {
+                $isProjectMember = true;
+                break;
+            }
+        }
+        
+        if (!$isAdmin && !$isProjectMember) {
+            abort(403, 'Только преподаватели или участники команд проекта могут завершать задачи.');
         }
 
         $validated = $request->validate([
-            'completion_text' => 'nullable|string|max:1000',
+            'completion_text' => 'required|string|max:1000',
             'completion_file' => 'nullable|file|mimes:pdf,doc,docx,txt,zip,rar,jpg,jpeg,png,gif|max:10240', // 10MB max
             'completion_files' => 'nullable|array|max:10', // максимум 10 файлов
             'completion_files.*' => 'file|mimes:pdf,doc,docx,txt,zip,rar,jpg,jpeg,png,gif|max:10240', // 10MB max per file
@@ -135,6 +222,10 @@ class ProjectTaskController extends Controller
             'status' => 'completed',
             'completed_at' => now(),
             'completion_text' => $validated['completion_text'] ?? null,
+            'is_rejected' => false, // Сбрасываем статус отклонения при повторном завершении
+            'rejection_reason' => null,
+            'rejected_at' => null,
+            'rejected_by' => null,
         ];
 
         // Обработка старого формата (одиночный файл)
@@ -147,7 +238,8 @@ class ProjectTaskController extends Controller
 
         $task->update($updateData);
 
-        // Обработка множественных файлов
+        // Создаем комментарий о завершении
+        $attachedFiles = [];
         if ($request->hasFile('completion_files')) {
             foreach ($request->file('completion_files') as $file) {
                 $filename = 'task_file_' . $task->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
@@ -160,8 +252,22 @@ class ProjectTaskController extends Controller
                     'mime_type' => $file->getMimeType(),
                     'file_size' => $file->getSize(),
                 ]);
+
+                $attachedFiles[] = [
+                    'filename' => $filename,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                ];
             }
         }
+
+        // Создаем комментарий о завершении задачи
+        $task->comments()->create([
+            'user_id' => Auth::id(),
+            'comment' => $validated['completion_text'],
+            'type' => 'completion',
+            'attached_files' => $attachedFiles,
+        ]);
 
         return redirect()->route('projects.tasks.index', $project)
             ->with('success', 'Задача отмечена как выполненная!');
@@ -180,9 +286,9 @@ class ProjectTaskController extends Controller
         // Загружаем команду проекта
         $project->load('team');
         
-        // Проверяем права доступа: администратор или лидер команды проекта
-        if (!Auth::user()->isAdmin() && $project->team->leader_id !== Auth::id()) {
-            abort(403, 'Только администратор или лидер команды может удалять задачи проекта.');
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут удалять задачи проекта.');
         }
 
         // Нельзя удалять базовые задачи
@@ -194,5 +300,113 @@ class ProjectTaskController extends Controller
 
         return redirect()->route('projects.tasks.index', $project)
             ->with('success', 'Задача успешно удалена!');
+    }
+
+    /**
+     * Отклонить выполнение задачи
+     */
+    public function reject(Request $request, Project $project, Task $task)
+    {
+        // Проверяем, что задача принадлежит проекту
+        if ($task->project_id !== $project->id) {
+            abort(404);
+        }
+
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут отклонять выполнение задач.');
+        }
+
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+            'rejection_files' => 'nullable|array|max:10',
+            'rejection_files.*' => 'file|mimes:pdf,doc,docx,txt,zip,rar,jpg,jpeg,png,gif|max:10240',
+        ]);
+
+        $attachedFiles = [];
+        if ($request->hasFile('rejection_files')) {
+            foreach ($request->file('rejection_files') as $file) {
+                $filename = 'rejection_file_' . $task->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('task_completions', $filename, 'public');
+                
+                $attachedFiles[] = [
+                    'filename' => $filename,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                ];
+            }
+        }
+
+        $task->reject($validated['rejection_reason'], Auth::id(), $attachedFiles);
+
+        return redirect()->route('projects.tasks.index', $project)
+            ->with('success', 'Выполнение задачи отклонено. Задача возвращена в статус "Открыта".');
+    }
+
+    /**
+     * Одобрить выполнение задачи
+     */
+    public function approve(Project $project, Task $task)
+    {
+        // Проверяем, что задача принадлежит проекту
+        if ($task->project_id !== $project->id) {
+            abort(404);
+        }
+
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут одобрять выполнение задач.');
+        }
+
+        $task->approve();
+
+        return redirect()->route('projects.tasks.index', $project)
+            ->with('success', 'Выполнение задачи одобрено.');
+    }
+
+    /**
+     * Добавить комментарий к задаче
+     */
+    public function addComment(Request $request, Project $project, Task $task)
+    {
+        // Проверяем, что задача принадлежит проекту
+        if ($task->project_id !== $project->id) {
+            abort(404);
+        }
+
+        // Проверяем права доступа: только преподаватели
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Только преподаватели могут добавлять комментарии к задачам.');
+        }
+
+        $validated = $request->validate([
+            'comment' => 'required|string|max:1000',
+            'comment_files' => 'nullable|array|max:10',
+            'comment_files.*' => 'file|mimes:pdf,doc,docx,txt,zip,rar,jpg,jpeg,png,gif|max:10240',
+        ]);
+
+        $attachedFiles = [];
+        if ($request->hasFile('comment_files')) {
+            foreach ($request->file('comment_files') as $file) {
+                $filename = 'comment_file_' . $task->id . '_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('task_completions', $filename, 'public');
+                
+                $attachedFiles[] = [
+                    'filename' => $filename,
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                ];
+            }
+        }
+
+        $task->comments()->create([
+            'user_id' => Auth::id(),
+            'comment' => $validated['comment'],
+            'type' => 'approval',
+            'attached_files' => $attachedFiles,
+        ]);
+
+        return redirect()->route('projects.tasks.show', [$project, $task])
+            ->with('success', 'Комментарий добавлен.');
     }
 }

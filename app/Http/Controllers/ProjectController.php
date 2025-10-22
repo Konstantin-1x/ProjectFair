@@ -205,7 +205,14 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        $project->load(['creator', 'team.members', 'tags', 'technologies']);
+        $project->load([
+            'creator', 
+            'team.members', 
+            'tags', 
+            'technologies',
+            'teams.members', // Загружаем все команды проекта с их участниками
+            'teams.leader'    // Загружаем лидеров команд
+        ]);
 
         return view('projects.show', compact('project'));
     }
